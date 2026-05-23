@@ -1,0 +1,57 @@
+[project]
+name = "sismic"
+version = "1.6.11"
+description = "Sismic Interactive Statechart Model Interpreter and Checker"
+readme = "README.rst"
+keywords = [
+  "harel",
+  "interpreter",
+  "machine",
+  "model",
+  "scxml",
+  "state",
+  "statechart",
+  "uml",
+]
+license = "LGPL3"
+maintainers = [ { name = "Robin Lévêque" } ]
+authors = [ { name = "Alexandre Decan" } ]
+requires-python = ">=3.14"
+classifiers = [
+  "Development Status :: 5 - Production/Stable",
+  "Environment :: Console",
+  "Intended Audience :: Developers",
+  "Intended Audience :: Education",
+  "Intended Audience :: Information Technology",
+  "Intended Audience :: Science/Research",
+  "License :: OSI Approved :: GNU Lesser General Public License v3 (LGPLv3)",
+  "Programming Language :: Python :: 3 :: Only",
+  "Programming Language :: Python :: 3.14",
+  "Topic :: Scientific/Engineering",
+  "Topic :: Software Development :: Interpreters",
+  "Topic :: Software Development :: Testing",
+]
+dependencies = [ "behave>=1.2.6", "ruamel-yaml>=0.18.2", "schema>=0.5" ]
+urls.Homepage = "https://github.com/AlexandreDecan/sismic/"
+scripts.sismic-bdd = "sismic.bdd.__main__:cli"
+scripts.sismic-plantuml = "sismic.io.plantuml:cli"
+
+[dependency-groups]
+dev = [
+  "pytest>=5",
+  "pytest-mock>=3",
+  "sphinx<7",
+  "sphinx-autodoc-typehints>=1.2.5,!=1.5",
+]
+
+[tool.setuptools]
+zip-safe = true
+include-package-data = true
+packages.find.exclude = [ "docs", "tests" ]
+packages.find.namespaces = false
+
+[tool.ruff]
+target-version = "py314"
+line-length = 100
+fix = true
+lint.select = [ "ALL" ]
