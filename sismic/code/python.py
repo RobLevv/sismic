@@ -1,15 +1,13 @@
 import collections
 import copy
+from collections.abc import Iterator, Mapping
+from typing import Any
 
-from types import CodeType
-from typing import Any, Dict, List, Optional, Mapping, Iterator
-
-from . import Evaluator
 from ..exceptions import CodeEvaluationError
 from ..model import Event, InternalEvent, MetaEvent, Transition
+from . import Evaluator
 
-
-__all__ = ['PythonEvaluator']
+__all__ = ["PythonEvaluator"]
 
 
 class FrozenContext(collections.abc.Mapping):
@@ -17,16 +15,17 @@ class FrozenContext(collections.abc.Mapping):
     A shallow copy of a context. The keys of the underlying context are
     exposed as attributes.
     """
-    __slots__ = ['__frozencontext']
 
-    def __init__(self, context: Dict) -> None:
+    __slots__ = ["__frozencontext"]
+
+    def __init__(self, context: dict) -> None:
         self.__frozencontext = {k: copy.copy(v) for k, v in context.items()}
 
     def __getattr__(self, item):
         try:
             return self.__frozencontext[item]
         except KeyError:
-            raise AttributeError('{} has no attribute {}'.format(self, item))
+            raise AttributeError(f"{self} has no attribute {item}")
 
     def __getstate__(self):
         return self.__frozencontext
@@ -100,7 +99,7 @@ class PythonEvaluator(Evaluator):
         super().__init__(interpreter, initial_context=initial_context)
 
         self._context = {}  # type: Dict[str, Any]
-        self._context.update(initial_context if initial_context else {})
+        self._context.update(initial_context or {})
         self._interpreter = interpreter
 
         # Precompiled code
@@ -125,8 +124,11 @@ class PythonEvaluator(Evaluator):
         return self._context.setdefault(name, value)
 
     def _evaluate_code(
-            self, code: Optional[str],
-            *, additional_context: Mapping[str, Any] = None) -> bool:
+        self,
+        code: str | None,
+        *,
+        additional_context: Mapping[str, Any] = None,
+    ) -> bool:
         """
         Evaluate given code using Python.
 
@@ -139,22 +141,25 @@ class PythonEvaluator(Evaluator):
 
         compiled_code = self._evaluable_code.get(code, None)
         if compiled_code is None:
-            compiled_code = self._evaluable_code.setdefault(code, compile(code, '<string>', 'eval'))
+            compiled_code = self._evaluable_code.setdefault(code, compile(code, "<string>", "eval"))
 
         exposed_context = {
-            'active': lambda s: s in self._interpreter.configuration,
-            'time': self._interpreter.time,
+            "active": lambda s: s in self._interpreter.configuration,
+            "time": self._interpreter.time,
         }
         exposed_context.update(additional_context if additional_context is not None else {})
 
         try:
             return bool(eval(compiled_code, exposed_context, self._context))
         except Exception as e:
-            raise CodeEvaluationError('"{}" occurred while evaluating "{}"'.format(e, code)) from e
+            raise CodeEvaluationError(f'"{e}" occurred while evaluating "{code}"') from e
 
     def _execute_code(
-            self, code: Optional[str],
-            *, additional_context: Mapping[str, Any] = None) -> List[Event]:
+        self,
+        code: str | None,
+        *,
+        additional_context: Mapping[str, Any] = None,
+    ) -> list[Event]:
         """
         Execute given code using Python.
 
@@ -168,16 +173,18 @@ class PythonEvaluator(Evaluator):
         compiled_code = self._executable_code.get(code, None)
         if compiled_code is None:
             compiled_code = self._executable_code.setdefault(
-                code, compile(code, '<string>', 'exec'))
+                code,
+                compile(code, "<string>", "exec"),
+            )
 
         sent_events = []  # type: List[Event]
 
         exposed_context = {
-            'active': lambda name: name in self._interpreter.configuration,
-            'time': self._interpreter.time,
-            'send': lambda name, **kwargs: sent_events.append(InternalEvent(name, **kwargs)),
-            'notify': lambda name, **kwargs: sent_events.append(MetaEvent(name, **kwargs)),
-            'setdefault': self._setdefault,
+            "active": lambda name: name in self._interpreter.configuration,
+            "time": self._interpreter.time,
+            "send": lambda name, **kwargs: sent_events.append(InternalEvent(name, **kwargs)),
+            "notify": lambda name, **kwargs: sent_events.append(MetaEvent(name, **kwargs)),
+            "setdefault": self._setdefault,
         }
         exposed_context.update(additional_context if additional_context is not None else {})
 
@@ -185,9 +192,9 @@ class PythonEvaluator(Evaluator):
             exec(compiled_code, exposed_context, self._context)  # type: ignore
             return sent_events
         except Exception as e:
-            raise CodeEvaluationError('"{}" occurred while executing "{}"'.format(e, code)) from e
+            raise CodeEvaluationError(f'"{e}" occurred while executing "{code}"') from e
 
-    def evaluate_guard(self, transition: Transition, event: Optional[Event] = None) -> bool:
+    def evaluate_guard(self, transition: Transition, event: Event | None = None) -> bool:
         """
         Evaluate the guard for given transition.
 
@@ -196,21 +203,26 @@ class PythonEvaluator(Evaluator):
         :return: truth value of *code*
         """
         additional_context = {
-            'after': (
-                lambda seconds: self._interpreter.time - seconds
-                >= self._interpreter._entry_time[transition.source]
+            "after": (
+                lambda seconds: (
+                    self._interpreter.time - seconds
+                    >= self._interpreter._entry_time[transition.source]
+                )
             ),
-            'idle': (
-                lambda seconds: self._interpreter.time - seconds
-                >= self._interpreter._idle_time[transition.source]
+            "idle": (
+                lambda seconds: (
+                    self._interpreter.time - seconds
+                    >= self._interpreter._idle_time[transition.source]
+                )
             ),
-            'event': event,
+            "event": event,
         }
         return self._evaluate_code(
-            getattr(transition, 'guard', None),
-            additional_context=additional_context)
+            getattr(transition, "guard", None),
+            additional_context=additional_context,
+        )
 
-    def evaluate_preconditions(self, obj, event: Optional[Event] = None) -> Iterator[str]:
+    def evaluate_preconditions(self, obj, event: Event | None = None) -> Iterator[str]:
         """
         Evaluate the preconditions for given object (either a *StateMixin* or a
         *Transition*) and return a list of conditions that are not satisfied.
@@ -220,21 +232,21 @@ class PythonEvaluator(Evaluator):
         :return: list of unsatisfied conditions
         """
         additional_context = {
-            'received': lambda name: name == getattr(event, 'name', None),
-            'sent': lambda name: name in [e.name for e in self._interpreter._sent_events],
-            'event': event,
+            "received": lambda name: name == getattr(event, "name", None),
+            "sent": lambda name: name in [e.name for e in self._interpreter._sent_events],
+            "event": event,
         }
 
         # Deal with __old__ in contracts, only required if there is an invariant or a postcondition
-        if len(getattr(obj, 'invariants', [])) > 0 or len(getattr(obj, 'postconditions', [])) > 0:
+        if len(getattr(obj, "invariants", [])) > 0 or len(getattr(obj, "postconditions", [])) > 0:
             self._memory[id(obj)] = FrozenContext(self._context)
 
         return filter(
             lambda c: not self._evaluate_code(c, additional_context=additional_context),
-            getattr(obj, 'preconditions', [])
+            getattr(obj, "preconditions", []),
         )
 
-    def evaluate_invariants(self, obj, event: Optional[Event] = None) -> Iterator[str]:
+    def evaluate_invariants(self, obj, event: Event | None = None) -> Iterator[str]:
         """
         Evaluate the invariants for given object (either a *StateMixin* or a
         *Transition*) and return a list of conditions that are not satisfied.
@@ -246,32 +258,28 @@ class PythonEvaluator(Evaluator):
         state_name = obj.source if isinstance(obj, Transition) else obj.name
 
         additional_context = {
-            '__old__': self._memory.get(
-                id(obj),
-                None),
-            'after': (
-                lambda seconds: self._interpreter.time - seconds
-                >= self._interpreter._entry_time[state_name]
+            "__old__": self._memory.get(id(obj), None),
+            "after": (
+                lambda seconds: (
+                    self._interpreter.time - seconds >= self._interpreter._entry_time[state_name]
+                )
             ),
-            'idle': (
-                lambda seconds: self._interpreter.time - seconds
-                >= self._interpreter._idle_time[state_name]
+            "idle": (
+                lambda seconds: (
+                    self._interpreter.time - seconds >= self._interpreter._idle_time[state_name]
+                )
             ),
-            'received': lambda name: name == getattr(
-                event,
-                'name',
-                None),
-            'sent': lambda name: name in [
-                e.name for e in self._interpreter._sent_events],
-            'event': event,
+            "received": lambda name: name == getattr(event, "name", None),
+            "sent": lambda name: name in [e.name for e in self._interpreter._sent_events],
+            "event": event,
         }
 
         return filter(
             lambda c: not self._evaluate_code(c, additional_context=additional_context),
-            getattr(obj, 'invariants', [])
+            getattr(obj, "invariants", []),
         )
 
-    def evaluate_postconditions(self, obj, event: Optional[Event] = None) -> Iterator[str]:
+    def evaluate_postconditions(self, obj, event: Event | None = None) -> Iterator[str]:
         """
         Evaluate the postconditions for given object (either a *StateMixin* or a
         *Transition*) and return a list of conditions that are not satisfied.
@@ -283,33 +291,29 @@ class PythonEvaluator(Evaluator):
         state_name = obj.source if isinstance(obj, Transition) else obj.name
 
         additional_context = {
-            '__old__': self._memory.get(
-                id(obj),
-                None),
-            'after': (
-                lambda seconds: self._interpreter.time - seconds
-                >= self._interpreter._entry_time[state_name]
+            "__old__": self._memory.get(id(obj), None),
+            "after": (
+                lambda seconds: (
+                    self._interpreter.time - seconds >= self._interpreter._entry_time[state_name]
+                )
             ),
-            'idle': (
-                lambda seconds: self._interpreter.time - seconds
-                >= self._interpreter._idle_time[state_name]
+            "idle": (
+                lambda seconds: (
+                    self._interpreter.time - seconds >= self._interpreter._idle_time[state_name]
+                )
             ),
-            'received': lambda name: name == getattr(
-                event,
-                'name',
-                None),
-            'sent': lambda name: name in [
-                e.name for e in self._interpreter._sent_events],
-            'event': event,
+            "received": lambda name: name == getattr(event, "name", None),
+            "sent": lambda name: name in [e.name for e in self._interpreter._sent_events],
+            "event": event,
         }
 
         return filter(
             lambda c: not self._evaluate_code(c, additional_context=additional_context),
-            getattr(obj, 'postconditions', [])
+            getattr(obj, "postconditions", []),
         )
 
     def __getstate__(self):
         attributes = self.__dict__.copy()
-        attributes['_executable_code'] = dict()  # Code fragment cannot be pickled
-        attributes['_evaluable_code'] = dict()  # Code fragment cannot be pickled
+        attributes["_executable_code"] = dict()  # Code fragment cannot be pickled
+        attributes["_evaluable_code"] = dict()  # Code fragment cannot be pickled
         return attributes

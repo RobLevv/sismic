@@ -32,8 +32,7 @@ class Stopwatch:
         # Return the value to display
         if self.is_split:
             return int(self.split_time)
-        else:
-            return int(self.elapsed_time)
+        return int(self.elapsed_time)
 
     def update(self, delta):
         # Update internal timer of ``delta`` seconds

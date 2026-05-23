@@ -1,23 +1,20 @@
-from typing import Callable, Any
-
-from ..model import MetaEvent, Event
+from collections.abc import Callable
+from typing import Any
 
 from ..exceptions import PropertyStatechartError
+from ..model import Event, MetaEvent
 
-
-__all__ = ['InternalEventListener', 'PropertyStatechartListener']
+__all__ = ["InternalEventListener", "PropertyStatechartListener"]
 
 
 class InternalEventListener:
-    """
-    Listener that filters and propagates internal events as external events.
-    """
+    """Listener that filters and propagates internal events as external events."""
 
     def __init__(self, callable: Callable[[Event], Any]) -> None:
         self._callable = callable
 
     def __call__(self, event: MetaEvent) -> None:
-        if event.name == 'event sent':
+        if event.name == "event sent":
             self._callable(Event(event.event.name, **event.event.data))
 
 

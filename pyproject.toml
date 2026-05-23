@@ -55,3 +55,7 @@ target-version = "py314"
 line-length = 100
 fix = true
 lint.select = [ "ALL" ]
+lint.ignore = [ "D203", "D205", "D212" ]
+
+[tool.pyrefly]
+search-path = [ "docs" ]

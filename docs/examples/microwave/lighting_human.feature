@@ -21,4 +21,3 @@ Feature: Lighting
     Given I reproduce "Lamp is on while cooking"
     When I press stop button
     Then lamp turns off
-

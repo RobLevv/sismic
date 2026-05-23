@@ -1,9 +1,7 @@
-from typing import List, Optional
-
 from .elements import Transition
 from .events import Event
 
-__all__ = ['MicroStep', 'MacroStep']
+__all__ = ["MacroStep", "MicroStep"]
 
 
 class MicroStep:
@@ -21,30 +19,35 @@ class MicroStep:
     :param sent_events: a possibly empty list of events that are sent during the step
     """
 
-    __slots__ = ['event', 'transition', 'entered_states', 'exited_states', 'sent_events']
+    __slots__ = ["entered_states", "event", "exited_states", "sent_events", "transition"]
 
-    def __init__(self, event: Event = None, transition: Transition = None,
-                 entered_states: List[str] = None, exited_states: List[str] = None,
-                 sent_events: List[Event] = None) -> None:
+    def __init__(
+        self,
+        event: Event = None,
+        transition: Transition = None,
+        entered_states: list[str] = None,
+        exited_states: list[str] = None,
+        sent_events: list[Event] = None,
+    ) -> None:
         self.event = event
         self.transition = transition
-        self.entered_states = entered_states if entered_states else []  # type: List[str]
-        self.exited_states = exited_states if exited_states else []  # type: List[str]
-        self.sent_events = sent_events if sent_events else []  # type: List[Event]
+        self.entered_states = entered_states or []  # type: List[str]
+        self.exited_states = exited_states or []  # type: List[str]
+        self.sent_events = sent_events or []  # type: List[Event]
 
     def __repr__(self):
         params = []
         if self.event:
-            params.append('event={!r}'.format(self.event))
+            params.append(f"event={self.event!r}")
         if self.transition:
-            params.append('transition={!r}'.format(self.transition))
+            params.append(f"transition={self.transition!r}")
         if self.entered_states:
-            params.append('entered_states={!r}'.format(self.entered_states))
+            params.append(f"entered_states={self.entered_states!r}")
         if self.exited_states:
-            params.append('exited_states={!r}'.format(self.exited_states))
+            params.append(f"exited_states={self.exited_states!r}")
         if self.sent_events:
-            params.append('sent_events={!r}'.format(self.sent_events))
-        return '{}({})'.format(self.__class__.__name__, ', '.join(params))
+            params.append(f"sent_events={self.sent_events!r}")
+        return "{}({})".format(self.__class__.__name__, ", ".join(params))
 
 
 class MacroStep:
@@ -55,68 +58,54 @@ class MacroStep:
     :param steps: a list of *MicroStep* instances
     """
 
-    def __init__(self, time: float, steps: List[MicroStep]) -> None:
+    def __init__(self, time: float, steps: list[MicroStep]) -> None:
         self._time = time
         self._steps = steps
 
-    __slots__ = ['_time', '_steps']
+    __slots__ = ["_steps", "_time"]
 
     @property
-    def steps(self) -> List[MicroStep]:
-        """
-        List of micro steps
-        """
+    def steps(self) -> list[MicroStep]:
+        """List of micro steps"""
         return self._steps
 
     @property
     def time(self) -> float:
-        """
-        Time at which this step was executed.
-        """
+        """Time at which this step was executed."""
         return self._time
 
     @property
-    def event(self) -> Optional[Event]:
-        """
-        Event (or *None*) that was consumed.
-        """
+    def event(self) -> Event | None:
+        """Event (or *None*) that was consumed."""
         for step in self._steps:
             if step.event:
                 return step.event
         return None
 
     @property
-    def transitions(self) -> List[Transition]:
-        """
-        A (possibly empty) list of transitions that were triggered.
-        """
+    def transitions(self) -> list[Transition]:
+        """A (possibly empty) list of transitions that were triggered."""
         return [step.transition for step in self._steps if step.transition]
 
     @property
-    def entered_states(self) -> List[str]:
-        """
-        List of the states names that were entered.
-        """
+    def entered_states(self) -> list[str]:
+        """List of the states names that were entered."""
         states = []  # type: List[str]
         for step in self._steps:
             states += step.entered_states
         return states
 
     @property
-    def exited_states(self) -> List[str]:
-        """
-        List of the states names that were exited.
-        """
+    def exited_states(self) -> list[str]:
+        """List of the states names that were exited."""
         states = []  # type: List[str]
         for step in self._steps:
             states += step.exited_states
         return states
 
     @property
-    def sent_events(self) -> List[Event]:
-        """
-        List of events that were sent during this step.
-        """
+    def sent_events(self) -> list[Event]:
+        """List of events that were sent during this step."""
         events = []
         for step in self._steps:
             for event in step.sent_events:
@@ -124,8 +113,7 @@ class MacroStep:
         return events
 
     def __repr__(self):
-        return '{}({!r}, {!r})'.format(self.__class__.__name__, self.time, self._steps)
+        return f"{self.__class__.__name__}({self.time!r}, {self._steps!r})"
 
     def __str__(self):
-        return 'Step@{}({}, {}, >{}, <{})'.format(round(self.time, 3), self.event, self.transitions,
-                                                  self.entered_states, self.exited_states)
+        return f"Step@{round(self.time, 3)}({self.event}, {self.transitions}, >{self.entered_states}, <{self.exited_states})"

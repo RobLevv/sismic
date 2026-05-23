@@ -1,12 +1,18 @@
+from collections.abc import Callable, Iterable
 from copy import deepcopy
-from typing import Callable, Dict, Iterable, List, Optional, Union, cast
+from typing import cast
 
 from ..exceptions import StatechartError
+from .elements import (
+    CompositeStateMixin,
+    CompoundState,
+    HistoryStateMixin,
+    StateMixin,
+    Transition,
+    TransitionStateMixin,
+)
 
-from .elements import (CompositeStateMixin, CompoundState, HistoryStateMixin,
-                       StateMixin, Transition, TransitionStateMixin)
-
-__all__ = ['Statechart']
+__all__ = ["Statechart"]
 
 
 class Statechart:
@@ -31,10 +37,8 @@ class Statechart:
         self._children[None] = []  # Root state
 
     @property
-    def root(self) -> Optional[str]:
-        """
-        Root state name
-        """
+    def root(self) -> str | None:
+        """Root state name"""
         for name, parent in self._parent.items():
             if parent is None:
                 return name
@@ -42,21 +46,17 @@ class Statechart:
 
     @property
     def preamble(self):
-        """
-        Preamble code
-        """
+        """Preamble code"""
         return self._preamble
 
     def __repr__(self):
-        return '{}({!r})'.format(self.__class__.__name__, self.name)
+        return f"{self.__class__.__name__}({self.name!r})"
 
     # ######### STATES ##########
 
     @property
     def states(self):
-        """
-        List of state names in lexicographic order.
-        """
+        """List of state names in lexicographic order."""
         return sorted(self._states.keys())
 
     def state_for(self, name: str) -> StateMixin:
@@ -70,9 +70,9 @@ class Statechart:
         try:
             return self._states[name]
         except KeyError as e:
-            raise StatechartError('State {} does not exist'.format(name)) from e
+            raise StatechartError(f"State {name} does not exist") from e
 
-    def parent_for(self, name: str) -> Optional[str]:
+    def parent_for(self, name: str) -> str | None:
         """
         Return the name of the parent of given state name.
 
@@ -83,9 +83,9 @@ class Statechart:
         try:
             return self._parent[name]
         except KeyError as e:
-            raise StatechartError('State {} does not exist'.format(name)) from e
+            raise StatechartError(f"State {name} does not exist") from e
 
-    def children_for(self, name: str) -> List[str]:
+    def children_for(self, name: str) -> list[str]:
         """
         Return the names of the children of the given state.
 
@@ -97,7 +97,7 @@ class Statechart:
 
         return self._children[name]
 
-    def ancestors_for(self, name: str) -> List[str]:
+    def ancestors_for(self, name: str) -> list[str]:
         """
         Return an ordered list of ancestors for the given state.
         Ancestors are ordered by decreasing depth.
@@ -115,7 +115,7 @@ class Statechart:
             parent = self._parent[parent]
         return ancestors
 
-    def descendants_for(self, name: str) -> List[str]:
+    def descendants_for(self, name: str) -> list[str]:
         """
         Return an ordered list of descendants for the given state.
         Descendants are ordered by increasing depth.
@@ -148,7 +148,7 @@ class Statechart:
         ancestors = self.ancestors_for(name)
         return len(ancestors) + 1
 
-    def least_common_ancestor(self, name_first: str, name_second: str) -> Optional[str]:
+    def least_common_ancestor(self, name_first: str, name_second: str) -> str | None:
         """
         Return the deepest common ancestor for *s1* and *s2*, or *None* if
         there is no common ancestor except root (top-level) state.
@@ -168,7 +168,7 @@ class Statechart:
                 return state
         return None
 
-    def leaf_for(self, names: Iterable[str]) -> List[str]:
+    def leaf_for(self, names: Iterable[str]) -> list[str]:
         """
         Return the leaves of *names*.
 
@@ -195,9 +195,7 @@ class Statechart:
 
     @property
     def transitions(self):
-        """
-        List of available transitions
-        """
+        """List of available transitions"""
         return list(self._transitions)
 
     def add_transition(self, transition: Transition) -> None:
@@ -211,15 +209,15 @@ class Statechart:
         try:
             from_state = self.state_for(transition.source)
         except StatechartError as e:
-            raise StatechartError('Unknown source state for {}'.format(transition)) from e
+            raise StatechartError(f"Unknown source state for {transition}") from e
 
         # Check that source state is a TransactionStateMixin
         if not isinstance(from_state, TransitionStateMixin):
-            raise StatechartError('Cannot add {} on {}'.format(transition, from_state))
+            raise StatechartError(f"Cannot add {transition} on {from_state}")
 
         # Check either internal OR target state is known
         if transition.target is not None and transition.target not in self._states:
-            raise StatechartError('Unknown target state for {}'.format(transition))
+            raise StatechartError(f"Unknown target state for {transition}")
 
         self._transitions.append(transition)
 
@@ -233,10 +231,14 @@ class Statechart:
         try:
             self._transitions.remove(transition)
         except ValueError:
-            raise StatechartError('Transition {} does not exist'.format(transition))
+            raise StatechartError(f"Transition {transition} does not exist")
 
-    def rotate_transition(self, transition: Transition, new_source: str = '',
-                          new_target: Optional[str] = '') -> None:
+    def rotate_transition(
+        self,
+        transition: Transition,
+        new_source: str = "",
+        new_target: str | None = "",
+    ) -> None:
         """
         Rotate given transition.
 
@@ -249,30 +251,30 @@ class Statechart:
         :raise StatechartError: if given transition or a given state does not exist.
         """
         # Check that either new_source or new_target is set
-        if new_source == new_target == '':
-            raise ValueError('You must at least specify the new source or new target')
+        if new_source == new_target == "":
+            raise ValueError("You must at least specify the new source or new target")
 
         # Check that transition exists
         if transition not in self._transitions:
-            raise StatechartError('Unknown transition {}'.format(transition))
+            raise StatechartError(f"Unknown transition {transition}")
 
         # Rotate using source
-        if new_source != '':
+        if new_source != "":
             new_source_state = self.state_for(new_source)
             if not isinstance(new_source_state, TransitionStateMixin):
-                raise StatechartError('{} cannot have transitions'.format(new_source_state))
+                raise StatechartError(f"{new_source_state} cannot have transitions")
             assert isinstance(new_source_state, StateMixin)
             transition._source = new_source_state.name
 
         # Rotate using target
-        if new_target != '':
+        if new_target != "":
             if new_target is None:
                 transition._target = None
             else:
                 new_target_state = self.state_for(new_target)
                 transition._target = new_target_state.name
 
-    def transitions_from(self, source: str) -> List[Transition]:
+    def transitions_from(self, source: str) -> list[Transition]:
         """
         Return the list of transitions whose source is given name.
 
@@ -288,7 +290,7 @@ class Statechart:
                 transitions.append(transition)
         return transitions
 
-    def transitions_to(self, target: str) -> List[Transition]:
+    def transitions_to(self, target: str) -> list[Transition]:
         """
         Return the list of transitions whose target is given name.
         Internal transitions are returned too.
@@ -302,11 +304,12 @@ class Statechart:
         transitions = []
         for transition in self._transitions:
             if transition.target == target or (
-                    transition.target is None and transition.source == target):
+                transition.target is None and transition.source == target
+            ):
                 transitions.append(transition)
         return transitions
 
-    def transitions_with(self, event: str) -> List[Transition]:
+    def transitions_with(self, event: str) -> list[Transition]:
         """
         Return the list of transitions that can be triggered by given event name.
 
@@ -321,7 +324,7 @@ class Statechart:
 
     # ######### EVENTS ##########
 
-    def events_for(self, name_or_names: Union[str, List[str]] = None) -> List[str]:
+    def events_for(self, name_or_names: str | list[str] = None) -> list[str]:
         """
         Return a list containing the name of every event that guards a transition
         in this statechart.
@@ -340,7 +343,7 @@ class Statechart:
         else:
             states = name_or_names
 
-        states = cast(List[str], states)
+        states = cast("list[str]", states)
         names = set()
         for state in states:
             for transition in self.transitions_from(state):
@@ -350,7 +353,7 @@ class Statechart:
 
     # ######### STRUCTURAL CHANGES ##########
 
-    def add_state(self, state: StateMixin, parent: Optional[str]) -> None:
+    def add_state(self, state: StateMixin, parent: str | None) -> None:
         """
         Add given state (a *StateMixin* instance) on given parent (its name as an *str*).
         If given state should be use as a root state, set *parent* to None.
@@ -361,33 +364,32 @@ class Statechart:
         """
         # Check state has a name
         if state.name is None:
-            raise StatechartError('State {} must have a name'.format(state))
+            raise StatechartError(f"State {state} must have a name")
 
         # Check name unicity
         if state.name in self._states.keys():
-            raise StatechartError('State {} already exists!'.format(state))
+            raise StatechartError(f"State {state} already exists!")
 
         if not parent:
             # Check root state
             if self.root:
                 raise StatechartError(
-                    'Root already defined, {} must declare an existing parent state'.format(state))
+                    f"Root already defined, {state} must declare an existing parent state",
+                )
         else:
             parent_state = self.state_for(parent)
 
             # Check that parent exists
             if not parent_state:
-                raise StatechartError('Parent "{}" of {} does not exist!'.format(parent, state))
+                raise StatechartError(f'Parent "{parent}" of {state} does not exist!')
 
             # Check that parent is a CompositeStateMixin.
             if not isinstance(parent_state, CompositeStateMixin):
-                raise StatechartError(
-                    '{} cannot be used as a parent for {}'.format(parent_state, state))
+                raise StatechartError(f"{parent_state} cannot be used as a parent for {state}")
 
             # If state is an HistoryState, its parent must be a CompoundState
             if isinstance(state, HistoryStateMixin) and not isinstance(parent_state, CompoundState):
-                raise StatechartError(
-                    '{} cannot be used as a parent for {}'.format(parent_state, state))
+                raise StatechartError(f"{parent_state} cannot be used as a parent for {state}")
 
         # Save state
         self._states[state.name] = state
@@ -441,7 +443,7 @@ class Statechart:
         if old_name == new_name:
             return
         if new_name in self._states:
-            raise StatechartError('State {} already exists!'.format(new_name))
+            raise StatechartError(f"State {new_name} already exists!")
 
         # Check state exists
         state = self.state_for(old_name)
@@ -499,7 +501,8 @@ class Statechart:
         # Check that parent is not a descendant (or self) of given state
         if new_parent in [name] + self.descendants_for(name):
             raise StatechartError(
-                'State {} cannot be moved into itself or one of its descendants.'.format(state))
+                f"State {state} cannot be moved into itself or one of its descendants.",
+            )
 
         # Change its parent and register state as a child
         old_parent = self.parent_for(name)
@@ -522,8 +525,14 @@ class Statechart:
                 if other_state.memory == name:
                     other_state.memory = None
 
-    def copy_from_statechart(self, statechart: 'Statechart', *, source: str, replace: str,
-                             renaming_func: Callable[[str], str] = lambda s: s) -> None:
+    def copy_from_statechart(
+        self,
+        statechart: Statechart,
+        *,
+        source: str,
+        replace: str,
+        renaming_func: Callable[[str], str] = lambda s: s,
+    ) -> None:
         """
         Copy (a part of) given *statechart* into current one.
 
@@ -546,8 +555,7 @@ class Statechart:
         :param renaming_func: Optional callable to resolve conflicting names.
         """
         if len(self.children_for(replace)) > 0:
-            raise StatechartError(
-                'State {} cannot be replaced while it has children.'.format(replace))
+            raise StatechartError(f"State {replace} cannot be replaced while it has children.")
 
         statechart_copy = deepcopy(statechart)  # type: Statechart
 
@@ -560,8 +568,10 @@ class Statechart:
             # May raise a StatechartError if names collides in source statechart.
             # Possible workaround: first rename all states to uid, then rename to new names
             statechart_copy.rename_state(name, new_name)
-            self.add_state(statechart_copy.state_for(new_name),
-                           statechart_copy.parent_for(new_name))
+            self.add_state(
+                statechart_copy.state_for(new_name),
+                statechart_copy.parent_for(new_name),
+            )
 
         # Copy transitions
         transitions = set()
@@ -573,8 +583,7 @@ class Statechart:
                 self.add_transition(transition)
             except StatechartError as e:
                 raise StatechartError(
-                    'Cannot copy {} because transition {} is not contained in {}'.format(
-                        transition.source, transition, source)
+                    f"Cannot copy {transition.source} because transition {transition} is not contained in {source}",
                 ) from e
 
     # ######### VALIDATION ##########
@@ -590,10 +599,12 @@ class Statechart:
             if isinstance(state, CompoundState) and state.initial:
                 if state.initial not in self._states:
                     raise StatechartError(
-                        'Initial state {} of {} does not exist'.format(state.initial, state))
+                        f"Initial state {state.initial} of {state} does not exist",
+                    )
                 if state.initial not in self.children_for(name):
                     raise StatechartError(
-                        'Initial state {} of {} must be a child state'.format(state.initial, state))
+                        f"Initial state {state.initial} of {state} must be a child state",
+                    )
         return True
 
     def _validate_historystate_memory(self) -> bool:
@@ -610,14 +621,15 @@ class Statechart:
                     continue
                 if memory == name:
                     raise StatechartError(
-                        'Initial memory {} of {} cannot target itself'.format(state.memory, state))
+                        f"Initial memory {state.memory} of {state} cannot target itself",
+                    )
                 if memory not in self._states:
                     raise StatechartError(
-                        'Initial memory {} of {} does not exist'.format(state.memory, state))
+                        f"Initial memory {state.memory} of {state} does not exist",
+                    )
                 if state.memory not in self.children_for(self.parent_for(name)):
                     raise StatechartError(
-                        'Initial memory {} of {} must be a parent\'s child'.format(
-                            state.memory, state)
+                        f"Initial memory {state.memory} of {state} must be a parent's child",
                     )
         return True
 

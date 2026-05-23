@@ -1,13 +1,10 @@
-import time
 import threading
-
-from typing import List
+import time
 
 from ..interpreter import Interpreter
 from ..model import MacroStep
 
-
-__all__ = ['AsyncRunner']
+__all__ = ["AsyncRunner"]
 
 
 class AsyncRunner:
@@ -62,61 +59,44 @@ class AsyncRunner:
 
     @property
     def running(self):
-        """
-        Holds if execution is currently running (even if it's paused).
-        """
+        """Holds if execution is currently running (even if it's paused)."""
         return self._thread.is_alive()
 
     @property
     def paused(self):
-        """
-        Holds if execution is running but paused.
-        """
+        """Holds if execution is running but paused."""
         return self.running and not self._unpaused.is_set()
 
     def start(self):
-        """
-        Start the execution.
-        """
+        """Start the execution."""
         if self._stop.is_set():
-            raise RuntimeError('Cannot restart a stopped runner.')
-        elif self._thread.is_alive():
-            raise RuntimeError('Runner is already started')
-        else:
-            self._unpaused.set()
-            self._thread.start()
+            raise RuntimeError("Cannot restart a stopped runner.")
+        if self._thread.is_alive():
+            raise RuntimeError("Runner is already started")
+        self._unpaused.set()
+        self._thread.start()
 
     def stop(self):
-        """
-        Stop the execution.
-        """
+        """Stop the execution."""
         self._stop.set()
         self._unpaused.set()
         self.wait()
 
     def pause(self):
-        """
-        Pause the execution.
-        """
+        """Pause the execution."""
         self._unpaused.clear()
 
     def unpause(self):
-        """
-        Unpause the execution.
-        """
+        """Unpause the execution."""
         self._unpaused.set()
 
     def wait(self):
-        """
-        Wait for the execution to finish.
-        """
+        """Wait for the execution to finish."""
         if self._thread.is_alive():
             self._thread.join()
 
-    def execute(self) -> List[MacroStep]:
-        """
-        Called each time the interpreter has to be executed.
-        """
+    def execute(self) -> list[MacroStep]:
+        """Called each time the interpreter has to be executed."""
         steps = []
         step = self.interpreter.execute_once()
 
@@ -130,31 +110,21 @@ class AsyncRunner:
         return steps
 
     def before_execute(self):
-        """
-        Called before each call to `execute()`.
-        """
-        pass
+        """Called before each call to `execute()`."""
 
-    def after_execute(self, steps: List[MacroStep]):
+    def after_execute(self, steps: list[MacroStep]):
         """
         Called after each call to self.execute().
         Receives the return value of self.execute().
 
         :param steps: List of macrosteps returned by self.execute()
         """
-        pass
 
     def before_run(self):
-        """
-        Called before running the execution.
-        """
-        pass
+        """Called before running the execution."""
 
     def after_run(self):
-        """
-        Called after a final configuration is reached.
-        """
-        pass
+        """Called after a final configuration is reached."""
 
     def _run(self):
         self.before_run()

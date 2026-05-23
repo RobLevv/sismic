@@ -22,5 +22,3 @@ Feature: Cooking
     When 5 seconds elapsed
     Then variable timer equals 0
     And heating turns off
-
-

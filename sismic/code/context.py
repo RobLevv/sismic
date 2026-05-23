@@ -2,15 +2,12 @@ import collections
 import copy
 import warnings
 
-from typing import Optional, List, Dict
+from ..model import InternalEvent, MetaEvent
 
-from ..model import Event, InternalEvent, MetaEvent
-
-
-__all__ = ['TimeContextProvider', 'EventContextProvider', 'FrozenContext']
+__all__ = ["EventContextProvider", "FrozenContext", "TimeContextProvider"]
 
 
-warnings.warn('sismic.code.context is deprecated since Sismic 1.4.1', DeprecationWarning)
+warnings.warn("sismic.code.context is deprecated since Sismic 1.4.1", DeprecationWarning)
 
 
 class TimeContextProvider:  # pragma: no cover
@@ -31,9 +28,7 @@ class TimeContextProvider:  # pragma: no cover
 
     @property
     def time(self) -> float:
-        """
-        Current time of the interpreter.
-        """
+        """Current time of the interpreter."""
         return self._time
 
     def after(self, name: str, seconds: float) -> bool:
@@ -68,15 +63,15 @@ class TimeContextProvider:  # pragma: no cover
         return name in self._configuration
 
     def __call__(self, event: MetaEvent):
-        if event.name == 'step started':
+        if event.name == "step started":
             self._time = event.time
-        elif event.name == 'state entered':
+        elif event.name == "state entered":
             self._configuration.append(event.state)
             self._entry_time[event.state] = self._time
             self._idle_time[event.state] = self._time
-        elif event.name == 'state exited':
+        elif event.name == "state exited":
             self._configuration.remove(event.state)
-        elif event.name == 'transition processed':
+        elif event.name == "transition processed":
             self._idle_time[event.source] = self._time
 
 
@@ -125,7 +120,7 @@ class EventContextProvider:  # pragma: no cover
         :param name: name of the event.
         :return: True iff. event was sent.
         """
-        return any((name == e.name for e in self._sent))
+        return any(name == e.name for e in self._sent)
 
     def received(self, name: str) -> bool:
         """
@@ -136,14 +131,14 @@ class EventContextProvider:  # pragma: no cover
         :param name: name of the event.
         :return: True iff. event is processed.
         """
-        return getattr(self._consumed, 'name', None) == name
+        return getattr(self._consumed, "name", None) == name
 
     def __call__(self, event: MetaEvent) -> None:
-        if event.name == 'event consumed':
+        if event.name == "event consumed":
             self._consumed = event.event
-        elif event.name == 'event sent':
+        elif event.name == "event sent":
             self._sent.append(event.event)
-        elif event.name == 'step started':
+        elif event.name == "step started":
             self._consumed = None
             self._sent = []
             self.pending = []
@@ -154,16 +149,17 @@ class FrozenContext(collections.abc.Mapping):  # pragma: no cover
     A shallow copy of a context. The keys of the underlying context are
     exposed as attributes.
     """
-    __slots__ = ['__frozencontext']
 
-    def __init__(self, context: Dict) -> None:
+    __slots__ = ["__frozencontext"]
+
+    def __init__(self, context: dict) -> None:
         self.__frozencontext = {k: copy.copy(v) for k, v in context.items()}
 
     def __getattr__(self, item):
         try:
             return self.__frozencontext[item]
         except KeyError:
-            raise AttributeError('{} has no attribute {}'.format(self, item))
+            raise AttributeError(f"{self} has no attribute {item}")
 
     def __getstate__(self):
         return self.__frozencontext
