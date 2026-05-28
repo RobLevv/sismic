@@ -1,8 +1,7 @@
 import pytest
 
 from sismic.exceptions import StatechartError
-from sismic.interpreter import Event
-from sismic.model import BasicState, CompoundState, Statechart, Transition
+from sismic.model import BasicState, CompoundState, Event, Statechart, Transition
 
 
 class TestEvents:
@@ -11,7 +10,7 @@ class TestEvents:
 
     def test_empty_event(self):
         with pytest.raises(TypeError):
-            Event()
+            Event()  # type:ignore[missing-argument]
 
     def test_truth_value(self):
         assert bool(Event("a"))
@@ -34,7 +33,7 @@ class TestEvents:
 
     def test_cannot_use_name_as_parameter(self):
         with pytest.raises(TypeError):
-            Event("test", name="fail")
+            Event("test", name="fail")  # type: ignore[bad-keyword-argument]
 
 
 class TestStatechartTraveral:
@@ -98,7 +97,7 @@ class TestStatechartTraveral:
 
     def test_name_is_none(self):
         sc = Statechart("test")
-        state = BasicState(name=None)
+        state = BasicState(name=None)  # type: ignore[bad-argument-type]
         with pytest.raises(StatechartError) as e:
             sc.add_state(state, None)
         assert "must have a name" in str(e.value)
@@ -239,14 +238,14 @@ class TestTransition:
         assert tr.target == "s2"
         internal_statechart.validate()
 
-    def test_rotate_both_unexisting(self, internal_statechart):
+    def test_rotate_both_unexisting(self, internal_statechart: Statechart):
         tr = next(t for t in internal_statechart.transitions if t.source == "s1")
 
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match=R"new target"):
             internal_statechart.rotate_transition(tr)
 
         with pytest.raises(StatechartError) as e:
-            internal_statechart.rotate_transition(tr, new_source=None, new_target=None)
+            internal_statechart.rotate_transition(tr, new_source=None, new_target=None)  # type: ignore[bad-argument-type]
         assert "State" in str(e.value)
         assert "does not exist" in str(e.value)
 
@@ -573,7 +572,7 @@ class TestCopyFromStatechart:
                 source="sc1_final",
                 replace="s1b1",
             )
-            assert "not contained in" in str(e.value)
+        assert "not contained in" in str(e.value)
 
     # See https://github.com/AlexandreDecan/sismic/issues/91
     def test_non_duplicated_transitions(self, modified_simple_statechart, composite_statechart):
@@ -600,13 +599,15 @@ class TestCopyFromStatechart:
                 source="sc1_root",
                 replace="s1b",
             )
-            assert "children" in str(e.value)
+        assert "children" in str(e.value)
 
     def test_with_namespace(self, modified_simple_statechart, composite_statechart):
         sc1_states = modified_simple_statechart.states
         sc2_states = composite_statechart.states
 
-        namespace = lambda s: "__" + s
+        def namespace(s):
+            return "__" + s
+
         composite_statechart.copy_from_statechart(
             modified_simple_statechart,
             source="sc1_root",

@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import pytest
 
 from sismic.exceptions import StatechartError
@@ -21,9 +23,7 @@ def compare_statecharts(s1, s2):
 
 @pytest.mark.parametrize("data", [1, -1, 1.0, "yes", "True", "no", "", [], [1, 2], {}, {1: 1}])
 def test_yaml_parser_types_handling(data):
-    yaml = (
-        "statechart:\n  name: " + str(data) + "\n  preamble: Nothing\n  root state:\n    name: s1"
-    )
+    yaml = f"statechart:\n  name: {data}\n  preamble: Nothing\n  root state:\n    name: s1"
     item = import_from_yaml(yaml).name
     assert isinstance(item, str)
 
@@ -32,7 +32,7 @@ def test_import_from_yaml_args():
     with pytest.raises(TypeError):
         import_from_yaml()
     with pytest.raises(TypeError):
-        import_from_yaml("A", filepath="B")
+        import_from_yaml("A", filepath=Path("B"))
 
 
 class TestImportFromYaml:
@@ -146,9 +146,9 @@ class TestExportToPlantUML:
         assert len(export) > 0
 
     def test_export_based_on_filepath(self, elevator):
-        filepath = "docs/examples/elevator/elevator.plantuml"
+        filepath = Path("docs/examples/elevator/elevator.plantuml")
         statechart = elevator.statechart
-        with open(filepath) as f:
+        with filepath.open() as f:
             p1 = f.read().strip()
 
         assert p1 != export_to_plantuml(statechart)
@@ -156,18 +156,18 @@ class TestExportToPlantUML:
         assert p1 == export_to_plantuml(statechart, based_on_filepath=filepath)
 
     def test_cli(self, capsys):
-        filepath = "docs/examples/elevator/elevator.yaml"
+        filepath = Path("docs/examples/elevator/elevator.yaml")
         statechart = import_from_yaml(filepath=filepath)
 
         # Check default parameters
-        cli([filepath])
+        cli([f"{filepath}"])
         out, _ = capsys.readouterr()
         assert export_to_plantuml(statechart) == out.strip()
 
         # Check all parameters
         cli(
             [
-                filepath,
+                f"{filepath}",
                 "--based-on",
                 "docs/examples/elevator/elevator.plantuml",
                 "--show-description",
@@ -182,7 +182,7 @@ class TestExportToPlantUML:
         out, _ = capsys.readouterr()
         export = export_to_plantuml(
             statechart,
-            based_on_filepath="docs/examples/elevator/elevator.plantuml",
+            based_on_filepath=Path("docs/examples/elevator/elevator.plantuml"),
             statechart_description=True,
             statechart_preamble=True,
             state_contracts=True,

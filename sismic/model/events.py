@@ -1,12 +1,14 @@
-import warnings
-from typing import Any
+from __future__ import annotations
+
+from typing import Generic, TypeVar
 
 __all__ = ["Event", "InternalEvent", "MetaEvent"]
 
+T = TypeVar("T", bound="str|float|Event|None")
 
-class Event:
-    """
-    An event with a name and (optionally) some data passed as named parameters.
+
+class Event(Generic[T]):
+    """An event with a name and (optionally) some data passed as named parameters.
 
     The list of parameters can be obtained using *dir(event)*. Notice that
     *name* and *data* are reserved names. If a *delay* parameter is provided,
@@ -22,36 +24,36 @@ class Event:
 
     __slots__ = ["data", "name"]
 
-    def __init__(self, name: str, **additional_parameters: Any) -> None:
+    def __init__(self, name: str, **additional_parameters: str | float | Event | None) -> None:
         self.name = name
         self.data = additional_parameters
 
-    def __eq__(self, other):
+    def __eq__(self, other: object) -> bool:
         if isinstance(other, Event):
             return self.name == other.name and self.data == other.data
         return NotImplemented
 
-    def __getattr__(self, attr):
+    def __getattr__(self, attr: str) -> str | float | Event | None:
         try:
             return self.data[attr]
-        except KeyError:
-            raise AttributeError(f"{self} has no attribute {attr}")
+        except KeyError as err:
+            raise AttributeError(name=attr, obj=self) from err
 
-    def __getstate__(self):
+    def __getstate__(self) -> tuple[str, dict[str, str | float | Event | None]]:
         # For pickle and implicitly for multiprocessing
         return self.name, self.data
 
-    def __setstate__(self, state):
+    def __setstate__(self, state: tuple[str, dict[str, str | float | Event | None]]) -> None:
         # For pickle and implicitly for multiprocessing
         self.name, self.data = state
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         return hash(self.name)
 
-    def __dir__(self):
-        return ["name"] + list(self.data.keys())
+    def __dir__(self) -> list[str]:
+        return ["name", *list(self.data.keys())]
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         if self.data:
             return "{}({!r}, {})".format(
                 self.__class__.__name__,
@@ -63,21 +65,6 @@ class Event:
 
 class InternalEvent(Event):
     """Subclass of Event that represents an internal event."""
-
-
-class DelayedEvent(Event):
-    """
-    An event that is delayed.
-
-    Deprecated since 1.4.0, use `Event` with a `delay` parameter instead.
-    """
-
-    def __init__(self, name: str, delay: float, **additional_parameters: Any) -> None:
-        warnings.warn(
-            "DelayedEvent is deprecated since 1.4.0, use Event with a delay parameter instead.",
-            DeprecationWarning,
-        )
-        super().__init__(name, delay=delay, **additional_parameters)
 
 
 class MetaEvent(Event):

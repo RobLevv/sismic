@@ -1,18 +1,19 @@
 import unittest
+from pathlib import Path
 
 from sismic.interpreter import Interpreter
 from sismic.io import import_from_yaml
 
 
 class MicrowaveTests(unittest.TestCase):
-    def setUp(self):
-        with open("microwave.yaml") as f:
+    def setUp(self) -> None:
+        with Path("microwave.yaml").open() as f:
             sc = import_from_yaml(f)
 
         self.oven = Interpreter(sc)
         self.oven.execute_once()
 
-    def test_no_heating_when_door_is_not_closed(self):
+    def test_no_heating_when_door_is_not_closed(self) -> None:
         self.oven.queue("door_opened", "item_placed", "timer_inc")
         self.oven.execute()
 
@@ -20,15 +21,15 @@ class MicrowaveTests(unittest.TestCase):
 
         for step in iter(self.oven.execute_once, None):
             for event in step.sent_events:
-                self.assertNotEqual(event.name, "heating_on")
+                assert event.name != "heating_on"
 
-        self.assertNotIn("cooking_mode", self.oven.configuration)
+        assert "cooking_mode" not in self.oven.configuration
 
-    def test_increase_timer(self):
+    def test_increase_timer(self) -> None:
         self.oven.queue("door_opened", "item_placed", "door_closed")
 
         events = 10 * ["timer_inc"]
         self.oven.queue(*events)
         self.oven.execute()
 
-        self.assertEqual(self.oven.context["timer"], 10)
+        assert self.oven.context["timer"] == 10

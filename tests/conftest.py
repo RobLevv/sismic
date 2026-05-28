@@ -1,24 +1,27 @@
-import os
+from pathlib import Path
 
 import pytest
 
-from sismic.interpreter import Interpreter
+from sismic.interpreter.default import Interpreter
 from sismic.io import import_from_yaml
+
+EXAMPLES_PATH = Path(__file__).parents[1] / "docs" / "examples"
+TESTS_PATH = Path(__file__).parent
 
 
 @pytest.fixture(params=[False, True], ids=["no contract", "contract"])
 def elevator(request):
     if request.param:
-        sc = import_from_yaml(filepath="docs/examples/elevator/elevator_contract.yaml")
+        sc = import_from_yaml(filepath=EXAMPLES_PATH / "elevator" / "elevator_contract.yaml")
     else:
-        sc = import_from_yaml(filepath="docs/examples/elevator/elevator.yaml")
+        sc = import_from_yaml(filepath=EXAMPLES_PATH / "elevator" / "elevator.yaml")
 
     return Interpreter(sc)
 
 
 @pytest.fixture
 def remote_elevator(elevator):
-    sc = import_from_yaml(filepath="docs/examples/elevator/elevator_buttons.yaml")
+    sc = import_from_yaml(filepath=EXAMPLES_PATH / "elevator" / "elevator_buttons.yaml")
     remote = Interpreter(sc)
     remote.bind(elevator)
     return remote
@@ -26,72 +29,74 @@ def remote_elevator(elevator):
 
 @pytest.fixture
 def writer():
-    sc = import_from_yaml(filepath="docs/examples/writer_options.yaml")
+    sc = import_from_yaml(filepath=EXAMPLES_PATH / "writer_options.yaml")
     return Interpreter(sc)
 
 
 @pytest.fixture(params=[False, True], ids=["no contract", "contract"])
 def microwave(request):
     if request.param:
-        sc = import_from_yaml(filepath="docs/examples/microwave/microwave_with_contracts.yaml")
+        sc = import_from_yaml(
+            filepath=EXAMPLES_PATH / "microwave" / "microwave_with_contracts.yaml"
+        )
     else:
-        sc = import_from_yaml(filepath="docs/examples/microwave/microwave.yaml")
+        sc = import_from_yaml(filepath=EXAMPLES_PATH / "microwave" / "microwave.yaml")
     return Interpreter(sc)
 
 
 @pytest.fixture
 def simple_statechart():
-    return import_from_yaml(filepath="tests/yaml/simple.yaml")
+    return import_from_yaml(filepath=TESTS_PATH / "yaml" / "simple.yaml")
 
 
 @pytest.fixture
 def composite_statechart():
-    return import_from_yaml(filepath="tests/yaml/composite.yaml")
+    return import_from_yaml(filepath=TESTS_PATH / "yaml" / "composite.yaml")
 
 
 @pytest.fixture
 def deep_history_statechart():
-    return import_from_yaml(filepath="tests/yaml/deep_history.yaml")
+    return import_from_yaml(filepath=TESTS_PATH / "yaml" / "deep_history.yaml")
 
 
 @pytest.fixture
 def final_statechart():
-    return import_from_yaml(filepath="tests/yaml/final.yaml")
+    return import_from_yaml(filepath=TESTS_PATH / "yaml" / "final.yaml")
 
 
 @pytest.fixture
 def infinite_statechart():
-    return import_from_yaml(filepath="tests/yaml/infinite.yaml")
+    return import_from_yaml(filepath=TESTS_PATH / "yaml" / "infinite.yaml")
 
 
 @pytest.fixture
 def parallel_statechart():
-    return import_from_yaml(filepath="tests/yaml/parallel.yaml")
+    return import_from_yaml(filepath=TESTS_PATH / "yaml" / "parallel.yaml")
 
 
 @pytest.fixture
 def nested_parallel_statechart():
-    return import_from_yaml(filepath="tests/yaml/nested_parallel.yaml")
+    return import_from_yaml(filepath=TESTS_PATH / "yaml" / "nested_parallel.yaml")
 
 
 @pytest.fixture
 def nondeterministic_statechart():
-    return import_from_yaml(filepath="tests/yaml/nondeterministic.yaml")
+    return import_from_yaml(filepath=TESTS_PATH / "yaml" / "nondeterministic.yaml")
 
 
 @pytest.fixture
 def history_statechart():
-    return import_from_yaml(filepath="tests/yaml/history.yaml")
+    return import_from_yaml(filepath=TESTS_PATH / "yaml" / "history.yaml")
 
 
 @pytest.fixture
 def internal_statechart():
-    return import_from_yaml(filepath="tests/yaml/internal.yaml")
+    return import_from_yaml(filepath=TESTS_PATH / "yaml" / "internal.yaml")
 
 
 @pytest.fixture
 def priority_statechart():
-    return import_from_yaml(filepath="tests/yaml/priority.yaml")
+    return import_from_yaml(filepath=TESTS_PATH / "yaml" / "priority.yaml")
 
 
 @pytest.fixture(
@@ -112,7 +117,7 @@ def priority_statechart():
     ],
 )
 def example_from_tests(request):
-    return import_from_yaml(filepath=os.path.join("tests", "yaml", request.param + ".yaml"))
+    return import_from_yaml(filepath=TESTS_PATH / "yaml" / f"{request.param}.yaml")
 
 
 @pytest.fixture(
@@ -126,4 +131,4 @@ def example_from_tests(request):
     ],
 )
 def example_from_docs(request):
-    return import_from_yaml(filepath=os.path.join("docs", "examples", request.param + ".yaml"))
+    return import_from_yaml(filepath=EXAMPLES_PATH / f"{request.param}.yaml")

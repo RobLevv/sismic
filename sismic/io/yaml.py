@@ -1,62 +1,68 @@
+from __future__ import annotations
+
 from io import StringIO
+from pathlib import Path
+from typing import TYPE_CHECKING, TextIO
 
 import schema
 from ruamel import yaml
+from schema import Optional, Or, Schema, Use
 
-from ..exceptions import StatechartError
-from ..model import Statechart
 from .datadict import export_to_dict, import_from_dict
 
-__all__ = ["export_to_yaml", "import_from_yaml"]
+if TYPE_CHECKING:
+    from sismic.model import Statechart
 
 
 class SCHEMA:
-    contract = {schema.Or("before", "after", "always"): schema.Use(str)}
+    contract = Schema({Or("before", "after", "always"): Use(str)})
 
-    transition = {
-        schema.Optional("target"): schema.Use(str),
-        schema.Optional("event"): schema.Use(str),
-        schema.Optional("guard"): schema.Use(str),
-        schema.Optional("action"): schema.Use(str),
-        schema.Optional("contract"): [contract],
-        schema.Optional("priority"): schema.Or(schema.Use(int), "high", "low"),
-    }
-
-    state = dict()  # type: ignore
+    transition = Schema(
+        {
+            Optional("target"): Use(str),
+            Optional("event"): Use(str),
+            Optional("guard"): Use(str),
+            Optional("action"): Use(str),
+            Optional("contract"): [contract],
+            Optional("priority"): Or(Use(int), "high", "low"),
+        },
+    )
+    state = {}  # noqa: RUF012
     state.update(
         {
-            "name": schema.Use(str),
-            schema.Optional("type"): schema.Or("final", "shallow history", "deep history"),
-            schema.Optional("on entry"): schema.Use(str),
-            schema.Optional("on exit"): schema.Use(str),
-            schema.Optional("transitions"): [transition],
-            schema.Optional("contract"): [contract],
-            schema.Optional("initial"): schema.Use(str),
-            schema.Optional("parallel states"): [state],
-            schema.Optional("states"): [state],
-            schema.Optional("memory"): schema.Use(str),
+            "name": Use(str),
+            Optional("type"): Or("final", "shallow history", "deep history"),
+            Optional("on entry"): Use(str),
+            Optional("on exit"): Use(str),
+            Optional("transitions"): [transition],
+            Optional("contract"): [contract],
+            Optional("initial"): Use(str),
+            Optional("parallel states"): [state],
+            Optional("states"): [state],
+            Optional("memory"): Use(str),
         },
     )
 
-    statechart = {
-        "statechart": {
-            "name": schema.Use(str),
-            schema.Optional("description"): schema.Use(str),
-            schema.Optional("preamble"): schema.Use(str),
-            "root state": state,
+    statechart = Schema(
+        {
+            "statechart": {
+                "name": Use(str),
+                Optional("description"): Use(str),
+                Optional("preamble"): Use(str),
+                "root state": state,
+            },
         },
-    }
+    )
 
 
 def import_from_yaml(
-    text: str = None,
-    filepath: str = None,
+    text: TextIO | str | None = None,
+    filepath: Path | None = None,
     *,
     ignore_schema: bool = False,
     ignore_validation: bool = False,
 ) -> Statechart:
-    """
-    Import a statechart from a YAML representation (first argument) or a YAML file (filepath
+    """Import a statechart from a YAML representation (first argument) or a YAML file (filepath
     argument).
 
     Unless specified, the structure contained in the YAML is validated against a predefined
@@ -76,17 +82,14 @@ def import_from_yaml(
     if text and filepath:
         raise TypeError("Either provide first argument or filepath argument, not both.")
     if filepath:
-        with open(filepath) as f:
+        with Path(filepath).open() as f:
             text = f.read()
 
     yml = yaml.YAML(typ="safe", pure=True)
     data = yml.load(text)
 
     if not ignore_schema:
-        try:
-            data = schema.Schema(SCHEMA.statechart).validate(data)
-        except schema.SchemaError as e:
-            raise StatechartError("YAML validation failed") from e
+        data = schema.Schema(SCHEMA.statechart).validate(data)
 
     sc = import_from_dict(data)
 
@@ -95,9 +98,8 @@ def import_from_yaml(
     return sc
 
 
-def export_to_yaml(statechart: Statechart, filepath: str = None) -> str:
-    """
-    Export given *Statechart* instance to YAML. Its YAML representation is returned by
+def export_to_yaml(statechart: Statechart, filepath: str | None = None) -> str:
+    """Export given *Statechart* instance to YAML. Its YAML representation is returned by
     this function. Automatically save the output to filepath, if provided.
 
     :param statechart: statechart to export
@@ -110,7 +112,7 @@ def export_to_yaml(statechart: Statechart, filepath: str = None) -> str:
     yml.dump(export_to_dict(statechart), output)
 
     if filepath:
-        with open(filepath, "w") as f:
+        with Path(filepath).open("w") as f:
             f.write(output.getvalue())
 
     return output.getvalue()

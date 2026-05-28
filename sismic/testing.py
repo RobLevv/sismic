@@ -1,8 +1,13 @@
-from collections.abc import Mapping
-from typing import Any, Union
+from __future__ import annotations
 
-from .interpreter import Interpreter
+from typing import TYPE_CHECKING, Any
+
 from .model import MacroStep, Transition
+
+if TYPE_CHECKING:
+    from collections.abc import Mapping
+
+    from .interpreter import Interpreter
 
 __all__ = [
     "event_is_consumed",
@@ -13,7 +18,7 @@ __all__ = [
     "transition_is_processed",
 ]
 
-MacroSteps = Union[MacroStep, list[MacroStep]]
+MacroSteps = MacroStep | list[MacroStep]
 
 
 def state_is_entered(steps: MacroSteps, name: str) -> bool:
@@ -25,10 +30,7 @@ def state_is_entered(steps: MacroSteps, name: str) -> bool:
     :return: given state was entered
     """
     steps = steps if isinstance(steps, list) else [steps]
-    for step in steps:
-        if name in step.entered_states:
-            return True
-    return False
+    return any(name in step.entered_states for step in steps)
 
 
 def state_is_exited(steps: MacroSteps, name: str) -> bool:
@@ -40,16 +42,13 @@ def state_is_exited(steps: MacroSteps, name: str) -> bool:
     :return: given state was exited
     """
     steps = steps if isinstance(steps, list) else [steps]
-    for step in steps:
-        if name in step.exited_states:
-            return True
-    return False
+    return any(name in step.exited_states for step in steps)
 
 
 def event_is_fired(
     steps: MacroSteps,
     name: str | None,
-    parameters: Mapping[str, Any] = None,
+    parameters: Mapping[str, Any] | None = None,
 ) -> bool:
     """
     Holds if an event was fired during given steps.
@@ -65,7 +64,7 @@ def event_is_fired(
     :return: event was fired
     """
     steps = steps if isinstance(steps, list) else [steps]
-    parameters = dict() if parameters is None else parameters
+    parameters = parameters or {}
 
     for step in steps:
         for event in step.sent_events:
@@ -83,7 +82,7 @@ def event_is_fired(
 def event_is_consumed(
     steps: MacroSteps,
     name: str | None,
-    parameters: Mapping[str, Any] = None,
+    parameters: Mapping[str, Any] | None = None,
 ) -> bool:
     """
     Holds if an event was consumed during given steps.
@@ -99,7 +98,7 @@ def event_is_consumed(
     :return: event was consumed
     """
     steps = steps if isinstance(steps, list) else [steps]
-    parameters = dict() if parameters is None else parameters
+    parameters = parameters or {}
 
     for step in steps:
         if step.event is None:
@@ -129,14 +128,8 @@ def transition_is_processed(steps: MacroSteps, transition: Transition | None = N
     steps = steps if isinstance(steps, list) else [steps]
 
     if transition is None:
-        for step in steps:
-            if len(step.transitions) > 0:
-                return True
-        return False
-    for step in steps:
-        if transition in step.transitions:
-            return True
-    return False
+        return any(len(step.transitions) > 0 for step in steps)
+    return any(transition in step.transitions for step in steps)
 
 
 def expression_holds(interpreter: Interpreter, expression: str) -> bool:

@@ -1,13 +1,19 @@
+from __future__ import annotations
+
 import pickle
 from collections import Counter
+from typing import TYPE_CHECKING
 
 import pytest
 
 from sismic.code import DummyEvaluator
 from sismic.exceptions import ConflictingTransitionsError, NonDeterminismError
-from sismic.helpers import coverage_from_trace, log_trace, run_in_background
-from sismic.interpreter import Event, InternalEvent, Interpreter
-from sismic.model import MacroStep, MetaEvent, MicroStep, Transition
+from sismic.helpers import coverage_from_trace, log_trace
+from sismic.interpreter import Interpreter
+from sismic.model import Event, InternalEvent, MacroStep, MetaEvent, MicroStep, Transition
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 
 class TestInterpreterWithSimple:
@@ -33,12 +39,6 @@ class TestInterpreterWithSimple:
 
         interpreter.execute()
         assert interpreter.time == 10
-
-    def test_deprecated_time(self, interpreter):
-        with pytest.warns(DeprecationWarning):
-            interpreter.time += 1
-            assert interpreter.time == 0
-            assert interpreter.clock.time == 1
 
     def test_queue(self, interpreter):
         interpreter.queue("e1")
@@ -269,7 +269,8 @@ class TestInterpreterWithDeephistory:
         assert step.entered_states.index("process_2") < step.entered_states.index("s22")
 
         interpreter.queue("next1", "next2").execute()
-        assert "s13" in interpreter.configuration and "s23" in interpreter.configuration
+        assert "s13" in interpreter.configuration
+        assert "s23" in interpreter.configuration
         assert not interpreter.final
 
     def test_exited_order(self, interpreter):
@@ -290,7 +291,8 @@ class TestInterpreterWithDeephistory:
         assert step.exited_states == ["pause", "active.H*"]
 
         interpreter.queue("next1", "next2").execute()
-        assert "s13" in interpreter.configuration and "s23" in interpreter.configuration
+        assert "s13" in interpreter.configuration
+        assert "s23" in interpreter.configuration
         assert not interpreter.final
 
 
@@ -379,7 +381,7 @@ class TestInterpreterWithParallel:
 
 
 class TestInterpreterWithNestedParallel:
-    common_states = ["root", "s1", "p1", "p2", "r1", "r2", "r3", "r4"]
+    common_states = ("root", "s1", "p1", "p2", "r1", "r2", "r3", "r4")
 
     @pytest.fixture
     def interpreter(self, nested_parallel_statechart):
@@ -391,12 +393,12 @@ class TestInterpreterWithNestedParallel:
         return interpreter
 
     def test_initial(self, interpreter):
-        assert interpreter.configuration == self.common_states + ["i1", "i2", "i3", "i4"]
+        assert interpreter.configuration == [*self.common_states, "i1", "i2", "i3", "i4"]
 
     def test_parallel_order(self, interpreter):
         step = interpreter.queue("next").execute_once()
 
-        assert interpreter.configuration == self.common_states + ["j1", "j2", "j3", "j4"]
+        assert interpreter.configuration == [*self.common_states, "j1", "j2", "j3", "j4"]
         assert step.exited_states == ["i1", "i2", "i3", "i4"]
         assert step.entered_states == ["j1", "j2", "j3", "j4"]
         assert [t.source for t in step.transitions] == ["i1", "i2", "i3", "i4"]
@@ -406,7 +408,7 @@ class TestInterpreterWithNestedParallel:
         interpreter.execute_once()
         step = interpreter.execute_once()
 
-        assert interpreter.configuration == self.common_states + ["j1", "j3", "k2", "k4"]
+        assert interpreter.configuration == [*self.common_states, "j1", "j3", "k2", "k4"]
         assert step.exited_states == ["j2", "j4"]
         assert step.entered_states == ["k2", "k4"]
         assert [t.source for t in step.transitions] == ["j2", "j4"]
@@ -416,7 +418,7 @@ class TestInterpreterWithNestedParallel:
         interpreter.execute_once()
         step = interpreter.execute_once()
 
-        assert interpreter.configuration == self.common_states + ["i1", "i2", "i3", "i4"]
+        assert interpreter.configuration == [*self.common_states, "i1", "i2", "i3", "i4"]
         assert step.exited_states.index("r2") < step.exited_states.index("r4")
         assert step.exited_states.index("p1") < step.exited_states.index("p2")
         assert step.exited_states.index("r2") < step.exited_states.index("p1")
@@ -436,13 +438,13 @@ class TestInterpreterWithNestedParallel:
         interpreter.execute_once()
         interpreter.execute_once()
 
-        assert interpreter.configuration == self.common_states + ["k1", "k3", "x", "y"]
+        assert interpreter.configuration == [*self.common_states, "k1", "k3", "x", "y"]
 
         step = interpreter.execute_once()
         assert step.exited_states.index("k1") < step.exited_states.index("k3")
         assert step.exited_states.index("k3") < step.exited_states.index("x")
         assert step.exited_states.index("x") < step.exited_states.index("y")
-        assert interpreter.configuration == self.common_states + ["k1", "x", "y", "z"]
+        assert interpreter.configuration == [*self.common_states, "k1", "x", "y", "z"]
         assert step.entered_states.index("k1") < step.entered_states.index("z")
         assert step.entered_states.index("z") < step.entered_states.index("x")
         assert step.entered_states.index("x") < step.entered_states.index("y")
@@ -454,7 +456,7 @@ class TestInterpreterWithNestedParallel:
         assert step.exited_states.index("k1") < step.exited_states.index("x")
         assert step.exited_states.index("x") < step.exited_states.index("y")
         assert step.exited_states.index("y") < step.exited_states.index("z")
-        assert interpreter.configuration == self.common_states + ["k1", "x", "y", "z"]
+        assert interpreter.configuration == [*self.common_states, "k1", "x", "y", "z"]
         assert step.entered_states.index("k1") < step.entered_states.index("x")
         assert step.entered_states.index("x") < step.entered_states.index("y")
         assert step.entered_states.index("y") < step.entered_states.index("z")
@@ -518,21 +520,6 @@ class TestLogTrace:
     def test_log_content(self, elevator):
         steps = elevator.queue("floorSelected", floor=4).execute()
         assert steps == self.steps
-
-
-def test_run_in_background(elevator):
-    from time import sleep
-
-    with pytest.warns(DeprecationWarning):
-        task = run_in_background(elevator, 0.001)
-    elevator.queue("floorSelected", floor=4)
-
-    sleep(0.01)
-
-    task.stop()
-
-    assert elevator.context["current"] == 4
-    assert elevator.time == 0
 
 
 class TestCoverageFromTrace:
@@ -655,14 +642,14 @@ class TestInterpreterBinding:
 
         i1.bind(i2.queue)
 
-        with pytest.raises(ValueError):
+        with pytest.raises(TypeError, match="Only InternalEvent and MetaEvent"):
             i1._raise_event(Event("test"))
 
         assert i1._select_event(consume=False) is None
         assert i2._select_event(consume=False) is None
 
 
-def test_interpreter_is_serialisable(microwave):
+def test_interpreter_is_serialisable(microwave, tmp_path: Path):
     microwave.queue(
         "door_opened",
         "item_placed",
@@ -732,17 +719,20 @@ class TestEventQueue:
         interpreter.queue("test3", delay=2)
 
         event = interpreter._select_event()
-        assert isinstance(event, InternalEvent) and event == Event("test2")
+        assert isinstance(event, InternalEvent)
+        assert event == Event("test2")
 
         interpreter._time = 2
         event = interpreter._select_event(consume=True)
-        assert isinstance(event, InternalEvent) and event == Event("test2")
+        assert isinstance(event, InternalEvent)
+        assert event == Event("test2")
 
         interpreter._raise_event(InternalEvent("test4"))
         # Queue is (0, test1) ; (2, test3) ; (2, test4) but test4 is internal
 
         event = interpreter._select_event(consume=True)
-        assert isinstance(event, InternalEvent) and event == Event("test4")
+        assert isinstance(event, InternalEvent)
+        assert event == Event("test4")
         event = interpreter._select_event(consume=True)
         assert event == Event("test1", delay=0)
         event = interpreter._select_event(consume=True)

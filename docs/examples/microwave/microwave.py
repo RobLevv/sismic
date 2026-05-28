@@ -1,9 +1,11 @@
 import sys
 import tkinter as tk
 from functools import partial
+from pathlib import Path
 
 from sismic.interpreter import Interpreter
 from sismic.io import import_from_yaml
+from sismic.model import Event
 
 # The following line is NOT needed in a typical environment.
 # This line make sismic available in our testing environment
@@ -13,14 +15,14 @@ sys.path.append("../../..")
 ####################################################
 # Create a tiny GUI
 class MicrowaveApplication(tk.Frame):
-    def __init__(self, master=None):
+    def __init__(self, master=None) -> None:
         super().__init__(master)
 
         # Initialize widgets
         self.create_widgets()
 
         # Create a Stopwatch interpreter
-        with open("microwave.yaml") as f:
+        with Path("microwave.yaml").open() as f:
             statechart = import_from_yaml(f)
         self.interpreter = Interpreter(statechart)
 
@@ -29,16 +31,16 @@ class MicrowaveApplication(tk.Frame):
 
         self.execute()
 
-    def execute(self):
+    def execute(self) -> None:
         self.interpreter.execute()
 
         # Update the widget that contains the list of active states.
         self.w_states["text"] = "\n".join(self.interpreter.configuration)
 
-        self.w_timer["text"] = "M.timer: %d" % self.interpreter.context.get("timer", "undefined")
-        self.w_power["text"] = "M.power: %d" % self.interpreter.context.get("power", "undefined")
+        self.w_timer["text"] = f"M.timer: {self.interpreter.context.get('timer', 'undefined')}"
+        self.w_power["text"] = f"M.power: {self.interpreter.context.get('power', 'undefined')}"
 
-    def create_widgets(self):
+    def create_widgets(self) -> None:
         self.pack(fill=tk.BOTH)
 
         # MAIN frame containing all others
@@ -221,7 +223,7 @@ class MicrowaveApplication(tk.Frame):
         self.w_power = tk.Label(variables_frame)
         self.w_power.pack(side=tk.BOTTOM, fill=tk.X)
 
-    def event_handler(self, event):
+    def event_handler(self, event: Event) -> None:
         name = event.name
 
         if name == "lamp_switch_on":
@@ -245,13 +247,13 @@ class MicrowaveApplication(tk.Frame):
         elif name == "turntable_stop":
             self.w_turntable["text"] = "off"
         else:
-            raise ValueError("Unknown event %s" % event)
+            raise ValueError(f"Unknown event {event}")
 
-    def send_event(self, event_name):
+    def send_event(self, event_name) -> None:
         self.interpreter.queue(event_name)
         self.execute()
 
-    def _quit(self):
+    def _quit(self) -> None:
         self.master.destroy()
 
 

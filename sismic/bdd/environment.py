@@ -1,7 +1,15 @@
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 from sismic.helpers import log_trace
 
+if TYPE_CHECKING:
+    from behave.model import Scenario, Step
+    from behave.runner import Context
 
-def before_scenario(context, scenario):
+
+def before_scenario(context: Context, scenario: Scenario) -> None:
     # Create interpreter
     statechart = context.config.userdata.get("statechart")
     interpreter_klass = context.config.userdata.get("interpreter_klass")
@@ -20,7 +28,7 @@ def before_scenario(context, scenario):
         )
 
 
-def before_step(context, step):
+def before_step(context: Context, step: Step) -> None:
     # "Then" steps must at least follow one "when" step
     if step.step_type == "then":
         # Stop monitoring
@@ -32,7 +40,7 @@ def before_step(context, step):
             )
 
 
-def after_step(context, step):
+def after_step(context: Context, step: Step) -> None:
     # "Given" triggers execution
     if step.step_type == "given":
         context.interpreter.execute()
@@ -53,10 +61,7 @@ def after_step(context, step):
         and step.status == "failed"
         and context.config.userdata.get("debug_on_error")
     ):
-        try:
-            import ipdb as pdb
-        except ImportError:
-            import pdb
+        import pdb
 
         print("--------------------------------------------------------------")
         print("Dropping into (i)pdb.", end="\n\n")

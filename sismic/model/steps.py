@@ -1,12 +1,17 @@
-from .elements import Transition
-from .events import Event
+from __future__ import annotations
+
+from itertools import chain
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from .elements import Transition
+    from .events import Event
 
 __all__ = ["MacroStep", "MicroStep"]
 
 
 class MicroStep:
-    """
-    Create a micro step.
+    """Create a micro step.
 
     A step consider *event*, takes a *transition* and results in a list
     of *entered_states* and a list of *exited_states*.
@@ -23,19 +28,20 @@ class MicroStep:
 
     def __init__(
         self,
-        event: Event = None,
-        transition: Transition = None,
-        entered_states: list[str] = None,
-        exited_states: list[str] = None,
-        sent_events: list[Event] = None,
+        event: Event | None = None,
+        transition: Transition | None = None,
+        entered_states: list[str] | None = None,
+        exited_states: list[str] | None = None,
+        sent_events: list[Event] | None = None,
     ) -> None:
         self.event = event
         self.transition = transition
-        self.entered_states = entered_states or []  # type: List[str]
-        self.exited_states = exited_states or []  # type: List[str]
-        self.sent_events = sent_events or []  # type: List[Event]
+        self.entered_states = entered_states or []
+        self.exited_states = exited_states or []
+        self.sent_events = sent_events or []
 
-    def __repr__(self):
+    def __repr__(self) -> str:
+        """Represent a MicroStep."""
         params = []
         if self.event:
             params.append(f"event={self.event!r}")
@@ -47,26 +53,25 @@ class MicroStep:
             params.append(f"exited_states={self.exited_states!r}")
         if self.sent_events:
             params.append(f"sent_events={self.sent_events!r}")
-        return "{}({})".format(self.__class__.__name__, ", ".join(params))
+        return f"{self.__class__.__name__}({', '.join(params)})"
 
 
 class MacroStep:
-    """
-    A macro step is a list of micro steps.
+    """A macro step is a list of micro steps.
 
     :param time: the time at which this step was executed
     :param steps: a list of *MicroStep* instances
     """
 
+    __slots__ = ["_steps", "_time"]
+
     def __init__(self, time: float, steps: list[MicroStep]) -> None:
         self._time = time
         self._steps = steps
 
-    __slots__ = ["_steps", "_time"]
-
     @property
     def steps(self) -> list[MicroStep]:
-        """List of micro steps"""
+        """List of micro steps."""
         return self._steps
 
     @property
@@ -90,30 +95,32 @@ class MacroStep:
     @property
     def entered_states(self) -> list[str]:
         """List of the states names that were entered."""
-        states = []  # type: List[str]
-        for step in self._steps:
-            states += step.entered_states
-        return states
+        return list(chain.from_iterable(step.entered_states for step in self._steps))
 
     @property
     def exited_states(self) -> list[str]:
         """List of the states names that were exited."""
-        states = []  # type: List[str]
-        for step in self._steps:
-            states += step.exited_states
-        return states
+        return list(chain.from_iterable(step.exited_states for step in self._steps))
 
     @property
     def sent_events(self) -> list[Event]:
         """List of events that were sent during this step."""
-        events = []
-        for step in self._steps:
-            for event in step.sent_events:
-                events.append(event)
-        return events
+        return list(chain.from_iterable(step.sent_events for step in self._steps))
 
-    def __repr__(self):
+    def __repr__(self) -> str:
+        """Represent a MacroStep.
+
+        :return: String representation
+        """
         return f"{self.__class__.__name__}({self.time!r}, {self._steps!r})"
 
-    def __str__(self):
-        return f"Step@{round(self.time, 3)}({self.event}, {self.transitions}, >{self.entered_states}, <{self.exited_states})"
+    def __str__(self) -> str:
+        """_summary_
+
+        :return: _description_
+        """
+        return (
+            f"Step@{round(self.time, 3)}("
+            f"{self.event}, {self.transitions}, >{self.entered_states}, <{self.exited_states}"
+            ")"
+        )

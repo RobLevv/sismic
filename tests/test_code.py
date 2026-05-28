@@ -3,19 +3,7 @@ import pytest
 from sismic import code
 from sismic.code.python import FrozenContext
 from sismic.exceptions import CodeEvaluationError
-from sismic.interpreter import Event, InternalEvent, MetaEvent
-
-
-def test_dummy_evaluator(mocker):
-    interpreter = mocker.MagicMock(name="interpreter")
-    evaluator = code.DummyEvaluator(interpreter=interpreter)
-
-    assert evaluator._evaluate_code("blablabla") is True
-    assert evaluator._evaluate_code("False") is True
-    assert evaluator.context == {}
-
-    assert evaluator._execute_code("blablabla") == []
-    assert evaluator.context == {}
+from sismic.model import Event, InternalEvent, MetaEvent
 
 
 def test_frozen_context():
@@ -116,8 +104,5 @@ class TestPythonEvaluator:
         evaluator._execute_code("a = 1\nassert a == 1", additional_context=evaluator.context)
         assert evaluator._evaluate_code("a == 1", additional_context={"a": 1})
 
-    @pytest.mark.xfail(
-        reason="http://stackoverflow.com/questions/32894942/listcomp-unable-to-access-locals-defined-in-code-called-by-exec-if-nested-in-fun and possibly fixed with https://bugs.python.org/issue3692",
-    )
     def test_access_outer_scope(self, evaluator):
         evaluator._execute_code("d = [x for x in range(10) if x != a]", additional_context={"a": 1})

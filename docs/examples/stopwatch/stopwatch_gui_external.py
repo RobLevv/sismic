@@ -1,10 +1,10 @@
 import sys
 import tkinter as tk
-
-from stopwatch import Stopwatch
+from pathlib import Path
 
 from sismic.interpreter import Interpreter
 from sismic.io import import_from_yaml
+from stopwatch import Stopwatch
 
 # The following line is NOT needed in a typical environment.
 # This line make sismic available in our testing environment
@@ -13,14 +13,14 @@ sys.path.append("../../..")
 
 # Create a tiny GUI
 class StopwatchApplication(tk.Frame):
-    def __init__(self, master=None):
+    def __init__(self, master=None) -> None:
         super().__init__(master)
 
         # Initialize widgets
         self.create_widgets()
 
         # Create a Stopwatch interpreter
-        with open("stopwatch_external.yaml") as f:
+        with Path("stopwatch_external.yaml").open() as f:
             statechart = import_from_yaml(f)
 
         # Create a stopwatch object and pass it to the interpreter
@@ -34,20 +34,20 @@ class StopwatchApplication(tk.Frame):
         # Update the stopwatch every 100ms
         self.after(100, self.update_stopwatch)
 
-    def update_stopwatch(self):
+    def update_stopwatch(self) -> None:
         self.stopwatch.update(delta=0.1)
         self.after(100, self.update_stopwatch)
 
         # Update timer label
         self.w_timer["text"] = self.stopwatch.display()
 
-    def run(self):
+    def run(self) -> None:
         # Queue a call every 100ms on tk's mainloop
         self.interpreter.execute()
         self.after(100, self.run)
         self.w_states["text"] = "active states: " + ", ".join(self.interpreter.configuration)
 
-    def create_widgets(self):
+    def create_widgets(self) -> None:
         self.pack()
 
         # Add buttons
@@ -78,30 +78,30 @@ class StopwatchApplication(tk.Frame):
         self.w_timer = tk.Label(root, font=("Helvetica", 16), pady=5)
         self.w_timer.pack(side=tk.BOTTOM, fill=tk.X)
 
-    def _start(self):
+    def _start(self) -> None:
         self.interpreter.queue("start")
         self.w_btn_start["state"] = tk.DISABLED
         self.w_btn_stop["state"] = tk.NORMAL
 
-    def _stop(self):
+    def _stop(self) -> None:
         self.interpreter.queue("stop")
         self.w_btn_start["state"] = tk.NORMAL
         self.w_btn_stop["state"] = tk.DISABLED
 
-    def _reset(self):
+    def _reset(self) -> None:
         self.interpreter.queue("reset")
 
-    def _split(self):
+    def _split(self) -> None:
         self.interpreter.queue("split")
         self.w_btn_split["state"] = tk.DISABLED
         self.w_btn_unsplit["state"] = tk.NORMAL
 
-    def _unsplit(self):
+    def _unsplit(self) -> None:
         self.interpreter.queue("split")
         self.w_btn_split["state"] = tk.NORMAL
         self.w_btn_unsplit["state"] = tk.DISABLED
 
-    def _quit(self):
+    def _quit(self) -> None:
         self.master.destroy()
 
 

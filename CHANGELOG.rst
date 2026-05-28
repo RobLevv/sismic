@@ -170,7 +170,7 @@ Queued events can be delayed when they are added to the interpreter event queue.
 
  - (Added) Delayed events are supported through ``DelayedEvent`` and ``DelayedInternalEvent``. If
    a delayed event with delay *d* is queued or sent by an interpreter at time *t*, it will not be processed
-   unless `execute` or `execute_once` is called after the current clock exceeds *t + d*.
+   unless ``execute`` or ``execute_once`` is called after the current clock exceeds *t + d*.
  - (Added) Property statecharts receive a *delayed event sent* meta-event when a delayed event is sent by a statechart.
  - (Added) Delayed events can be sent from within a statechart by specifying a ``delay`` parameter to the ``sent`` function.
  - (Added) An ``EventQueue`` class (in ``sismic.interpreter.queue``) that controls how (delayed) events are handled by an interpreter.

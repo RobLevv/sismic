@@ -1,37 +1,52 @@
+from __future__ import annotations
+
 from time import sleep
+from typing import TYPE_CHECKING
+from unittest.mock import MagicMock
 
 import pytest
 
-from sismic.interpreter import Interpreter
-from sismic.runner import AsyncRunner
+from sismic.interpreter.default import Interpreter
+from sismic.runner.runner import AsyncRunner
+
+if TYPE_CHECKING:
+    from collections.abc import Generator
+
+    from sismic.model.statechart import Statechart
+
+
+class MockedRunner(AsyncRunner):
+    before_run = MagicMock()
+    before_execute = MagicMock()
+    after_execute = MagicMock()
+    after_run = MagicMock()
 
 
 class TestAsyncRunner:
+    """Test Suite for AsyncRunner."""
+
     INTERVAL = 0.02
 
     @pytest.fixture
-    def interpreter(self, simple_statechart):
+    def interpreter(self, simple_statechart: Statechart) -> Interpreter:
         return Interpreter(simple_statechart)
 
     @pytest.fixture
-    def runner(self, interpreter):
+    def runner(self, interpreter: Interpreter) -> Generator[AsyncRunner]:
         r = AsyncRunner(interpreter, interval=0)
         yield r
         r.stop()
 
     @pytest.fixture
-    def mocked_runner(self, interpreter, mocker):
-        class MockedRunner(AsyncRunner):
-            before_run = mocker.MagicMock()
-            before_execute = mocker.MagicMock()
-            after_execute = mocker.MagicMock()
-            after_run = mocker.MagicMock()
-
+    def mocked_runner(
+        self,
+        interpreter: Interpreter,
+    ) -> Generator[AsyncRunner]:
         r = MockedRunner(interpreter, interval=0)
         yield r
         r.stop()
 
-    def test_not_yet_started(self, runner):
+    def test_not_yet_started(self, runner: AsyncRunner) -> None:
         assert runner.interpreter.configuration == []
 
         runner.interpreter.queue("goto s2")
@@ -42,7 +57,7 @@ class TestAsyncRunner:
         sleep(self.INTERVAL)
         assert runner.interpreter.configuration == ["root", "s3"]
 
-    def test_start(self, runner):
+    def test_start(self, runner: AsyncRunner) -> None:
         runner.start()
         sleep(self.INTERVAL)
         assert runner.interpreter.configuration == ["root", "s1"]
@@ -51,7 +66,7 @@ class TestAsyncRunner:
         sleep(self.INTERVAL)
         assert runner.interpreter.configuration == ["root", "s3"]
 
-    def test_restart_stopped(self, runner):
+    def test_restart_stopped(self, runner: AsyncRunner) -> None:
         runner.start()
         runner.stop()
 
@@ -60,7 +75,7 @@ class TestAsyncRunner:
 
         assert not runner.running
 
-    def test_start_again(self, runner):
+    def test_start_again(self, runner: AsyncRunner) -> None:
         runner.start()
 
         with pytest.raises(RuntimeError, match="already started"):
@@ -70,7 +85,7 @@ class TestAsyncRunner:
         runner.stop()
         assert not runner.running
 
-    def test_hooks(self, mocked_runner):
+    def test_hooks(self, mocked_runner: MockedRunner) -> None:
 
         assert len(mocked_runner.before_run.call_args_list) == 0
         assert len(mocked_runner.before_execute.call_args_list) == 0
@@ -90,7 +105,7 @@ class TestAsyncRunner:
         sleep(self.INTERVAL)
         assert len(mocked_runner.after_run.call_args_list) == 1
 
-    def test_final(self, runner):
+    def test_final(self, runner: AsyncRunner) -> None:
         runner.start()
         runner.interpreter.queue("goto s2")
         runner.interpreter.queue("goto final")
@@ -101,7 +116,7 @@ class TestAsyncRunner:
         sleep(self.INTERVAL)  # Wait for the thread to finish
         assert not runner._thread.is_alive()
 
-    def test_pause(self, runner):
+    def test_pause(self, runner: AsyncRunner) -> None:
         runner.start()
         assert not runner.paused
 
@@ -121,7 +136,7 @@ class TestAsyncRunner:
         sleep(self.INTERVAL)
         assert runner.interpreter.configuration == ["root", "s3"]
 
-    def test_state(self, runner):
+    def test_state(self, runner: AsyncRunner) -> None:
         assert not runner.running
         assert not runner.paused
         runner.start()
@@ -137,7 +152,7 @@ class TestAsyncRunner:
         assert not runner.running
         assert not runner.paused
 
-    def test_join_stopped(self, runner):
+    def test_join_stopped(self, runner: AsyncRunner) -> None:
         runner.start()
         runner.stop()
         runner.wait()

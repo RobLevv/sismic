@@ -1,5 +1,7 @@
+from __future__ import annotations
+
 from sismic import testing
-from sismic.interpreter import Event
+from sismic.model import Event
 
 
 def test_writer(writer):

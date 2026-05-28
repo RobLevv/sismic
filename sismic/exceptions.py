@@ -1,3 +1,12 @@
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from sismic.interpreter import Interpreter
+    from sismic.model import MacroStep, MicroStep, StateMixin
+
+
 class SismicError(Exception):
     pass
 
@@ -23,27 +32,24 @@ class NonDeterminismError(ExecutionError):
 
 
 class PropertyStatechartError(SismicError):
-    """
-    Raised when a property statechart reaches a final state.
+    """Raised when a property statechart reaches a final state.
 
     :param property_statechart: the property statechart that reaches a final state
     """
 
-    def __init__(self, property_statechart):
+    def __init__(self, property_statechart: Interpreter) -> None:
         super().__init__()
         self._property = property_statechart
 
-    @property
-    def property_statechart(self):
-        return self._property
-
-    def __str__(self):
-        return f"{self.__class__.__name__}\nProperty is not satisfied, {self._property} has reached a final state"
+    def __str__(self) -> str:
+        return (
+            f"{self.__class__.__name__}\nProperty is not satisfied,"
+            f" {self._property} has reached a final state"
+        )
 
 
 class ContractError(SismicError):
-    """
-    Base exception for situations in which a contract is not satisfied.
+    """Base exception for situations in which a contract is not satisfied.
     All the parameters are optional, and are exposed to ease debug.
 
     :param configuration: list of active states
@@ -55,7 +61,14 @@ class ContractError(SismicError):
 
     __slots__ = ["_assertion", "_configuration", "_context", "_obj", "_step"]
 
-    def __init__(self, configuration=None, step=None, obj=None, assertion=None, context=None):
+    def __init__(
+        self,
+        configuration: list[StateMixin] | None = None,
+        step: MicroStep | MacroStep | None = None,
+        obj: object = None,
+        assertion: object = None,
+        context: dict[object, object] | None = None,
+    ) -> None:
         super().__init__(self)
         self._configuration = configuration
         self._step = step
@@ -64,26 +77,26 @@ class ContractError(SismicError):
         self._context = context
 
     @property
-    def configuration(self):
+    def configuration(self) -> list[StateMixin] | None:
         return self._configuration
 
     @property
-    def step(self):
+    def step(self) -> MicroStep | MacroStep | None:
         return self._step
 
     @property
-    def obj(self):
+    def obj(self) -> object:
         return self._obj
 
     @property
-    def condition(self):
+    def condition(self) -> object:
         return self._assertion
 
     @property
-    def context(self):
+    def context(self) -> object:
         return self._context
 
-    def __str__(self):  # pragma: no cover
+    def __str__(self) -> str:
         message = [f"{self.__class__.__name__}"]
         if self._obj:
             message.append(f"Object: {self._obj}")

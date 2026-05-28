@@ -12,15 +12,15 @@
 # All configuration values have a default; values that are commented out
 # serve to show the default.
 
-import os
 import sys
+from pathlib import Path
+
+import sismic
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
-sys.path.insert(0, os.path.abspath(".."))
-
-import sismic
+sys.path.insert(0, str(Path("..").resolve()))
 
 # -- General configuration ------------------------------------------------
 
@@ -54,8 +54,8 @@ source_suffix = ".rst"
 master_doc = "index"
 
 # General information about the project.
-project = "Sismic"
-copyright = "2015, " + sismic.__author__
+project = sismic.__name__.capitalize()
+project_copyright = "2015, " + sismic.__author__
 author = sismic.__author__
 
 # The version info for the project you're documenting, acts as replacement for

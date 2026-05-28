@@ -1,9 +1,13 @@
+from __future__ import annotations
+
 import argparse
 import re
 import sys
+from pathlib import Path
+from typing import TYPE_CHECKING
 
-from ..io import import_from_yaml
-from ..model import (
+from sismic.io.yaml import import_from_yaml
+from sismic.model import (
     ActionStateMixin,
     CompoundState,
     ContractMixin,
@@ -15,7 +19,8 @@ from ..model import (
     Transition,
 )
 
-__all__ = ["export_to_plantuml"]
+if TYPE_CHECKING:
+    from collections.abc import Sequence
 
 
 class PlantUMLExporter:
@@ -23,7 +28,7 @@ class PlantUMLExporter:
         self,
         statechart: Statechart,
         *,
-        based_on: str = None,
+        based_on: str | None = None,
         statechart_name: bool = True,
         statechart_description: bool = True,
         statechart_preamble: bool = True,
@@ -42,17 +47,17 @@ class PlantUMLExporter:
         self.transition_contracts = transition_contracts
         self.transition_action = transition_action
 
-        self._based_on_arrows = dict()  # type: Dict[Tuple[str, str], str]
+        self._based_on_arrows: dict[tuple[str, str], str] = {}
         if self.based_on:
             for line in self.based_on.splitlines():
                 matches = re.findall(r"(\[\*\]|[a-zA-Z0-9]+) -([^ ]*)> (\[\*\]|[a-zA-Z0-9]+)", line)
                 if matches:
                     self._based_on_arrows[(matches[0][0], matches[0][2])] = f"-{matches[0][1]}>"
 
-        self._output = []  # type: List[str]
+        self._output: list[str] = []
         self._indent = 0
 
-    def arrow(self, source, target):
+    def arrow(self, source: str | None, target: str) -> str:
         # source = None --> initial state
         if not self.based_on:
             return "-->"
@@ -64,18 +69,18 @@ class PlantUMLExporter:
         )
         return self._based_on_arrows.get((source, target), "-->")
 
-    def indent(self):
+    def indent(self) -> None:
         self._indent += 2
 
-    def deindent(self):
+    def deindent(self) -> None:
         self._indent -= 2
 
     def output(self, text: str, *, wrap: str = "") -> None:
         lines = text.strip().split("\n")
 
-        for line in lines:
+        for raw_line in lines:
             # Special case for __old__
-            line = line.replace("__old__", "~__old__")
+            line = raw_line.replace("__old__", "~__old__")
 
             self._output.append(
                 "{indent}{wrap}{line}{wrap}".format(
@@ -89,16 +94,16 @@ class PlantUMLExporter:
     def state_id(name: str) -> str:
         return "".join(filter(str.isalnum, name))
 
-    def export_statechart(self):
+    def export_statechart(self) -> None:
         if self.statechart_name and self.statechart.name:
             self.output(f"title {self.statechart.name}")
 
         if self.statechart_description and self.statechart.description:
             self.output("caption {}".format(self.statechart.description.replace("\n", "\\n")))
 
-    def export_preamble(self):
+    def export_preamble(self) -> None:
         if self.statechart_preamble and self.statechart.preamble:
-            self.output(f"note top of {self.state_id(self.statechart.root)}")
+            self.output(f"note top of {self.state_id(self.statechart.root or '')}")
             self.indent()
             self.output(self.statechart.preamble)
             self.deindent()
@@ -163,7 +168,7 @@ class PlantUMLExporter:
                         "{} : {}/ {}".format(
                             self.state_id(name),
                             "".join(text),
-                            transition.action.strip().replace("\n", "; "),
+                            (transition.action or "").strip().replace("\n", "; "),
                         ),
                     )
 
@@ -210,17 +215,14 @@ class PlantUMLExporter:
 
         for transition in transitions:
             # Do not treat final states here
-            if isinstance(self.statechart.state_for(transition.target), FinalState):
+            if isinstance(self.statechart.state_for(transition.target or ""), FinalState):
                 continue
             self.export_transition(transition)
 
     def export_transition(self, transition: Transition) -> None:
-        target = self.statechart.state_for(transition.target)
+        target = self.statechart.state_for(transition.target or "")
 
-        if isinstance(target, FinalState):
-            target_name = "[*]"
-        else:
-            target_name = self.state_id(target.name)
+        target_name = "[*]" if isinstance(target, FinalState) else self.state_id(target.name)
 
         text = []
         if transition.priority != Transition.DEFAULT_PRIORITY:
@@ -236,13 +238,9 @@ class PlantUMLExporter:
             transition.preconditions or transition.invariants or transition.postconditions
         ):
             text.append("\\n")
-
-            for cond in transition.preconditions:
-                text.append(f"pre: {cond}\\n")
-            for cond in transition.invariants:
-                text.append(f"inv: {cond}\n")
-            for cond in transition.postconditions:
-                text.append(f"post: {cond}\n")
+            text.extend(f"pre: {cond}\\n" for cond in transition.preconditions)
+            text.extend(f"inv: {cond}\\n" for cond in transition.invariants)
+            text.extend(f"post: {cond}\\n" for cond in transition.postconditions)
 
         _format = (
             "{source} {arrow} {target} : {text}" if len(text) > 0 else "{source} {arrow} {target}"
@@ -250,25 +248,27 @@ class PlantUMLExporter:
         self.output(
             _format.format(
                 source=self.state_id(transition.source),
-                arrow=self.arrow(transition.source, transition.target),
+                arrow=self.arrow(transition.source, transition.target or ""),
                 target=target_name,
                 text="".join(text),
             ),
         )
 
-    def export_history_memory(self, history_state: ShallowHistoryState | DeepHistoryState):
+    def export_history_memory(self, history_state: ShallowHistoryState | DeepHistoryState) -> None:
         if history_state.memory:
             target = self.statechart.state_for(history_state.memory)
 
             self.output(
-                f"{self.state_id(history_state.name)} {self.arrow(history_state, target)} {self.state_id(target.name)}",
+                f"{self.state_id(history_state.name)}"
+                f" {self.arrow(history_state.name, target.name)}"
+                f" {self.state_id(target.name)}",
             )
 
     def export(self) -> str:
         self.output("@startuml")
 
         self.export_statechart()
-        self.export_state(self.statechart.root)  # type: ignore
+        self.export_state(self.statechart.root)  # type: ignore[bad-argument-type]
         self.export_preamble()
 
         self.output("@enduml")
@@ -278,10 +278,10 @@ class PlantUMLExporter:
 
 def export_to_plantuml(
     statechart: Statechart,
-    filepath: str = None,
+    filepath: Path | None = None,
     *,
-    based_on: str = None,
-    based_on_filepath: str = None,
+    based_on: str | None = None,
+    based_on_filepath: Path | None = None,
     statechart_name: bool = True,
     statechart_description: bool = False,
     statechart_preamble: bool = False,
@@ -290,8 +290,7 @@ def export_to_plantuml(
     transition_contracts: bool = False,
     transition_action: bool = True,
 ) -> str:
-    """
-    Export given statechart to plantUML (see http://plantuml/plantuml).
+    """Export given statechart to plantUML (see http://plantuml/plantuml).
     If a filepath is provided, also save the output to this file.
 
     Due to the way statecharts are representing, and due to the presence of features that are
@@ -321,7 +320,7 @@ def export_to_plantuml(
             "Parameters based_on and based_on_filepath cannot both be provided at the same time.",
         )
     if based_on_filepath:
-        with open(based_on_filepath) as f:
+        with Path(based_on_filepath).open() as f:
             based_on = f.read()
 
     exporter = PlantUMLExporter(
@@ -339,13 +338,13 @@ def export_to_plantuml(
     output = exporter.export()
 
     if filepath:
-        with open(filepath, "w") as f:
+        with Path(filepath).open("w") as f:
             f.write(output)
 
     return output
 
 
-def cli(args=None) -> int:
+def cli(args: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         prog="sismic-plantuml",
         description="Command-line utility to export Sismic statecharts to plantUML.\n"
@@ -416,27 +415,27 @@ def cli(args=None) -> int:
         help="Hide transition action",
     )
 
-    args, parameters = parser.parse_known_args(args)
+    known_args, _parameters = parser.parse_known_args(args)
 
-    statechart = import_from_yaml(filepath=args.statechart)
+    statechart = import_from_yaml(filepath=known_args.statechart)
 
-    if args.based_on:
-        with open(args.based_on) as f:
-            args.based_on = f.read()
+    if known_args.based_on:
+        with Path(known_args.based_on).open() as f:
+            known_args.based_on = f.read()
 
     exporter = PlantUMLExporter(
         statechart,
-        based_on=args.based_on,
-        statechart_name=args.statechart_name,
-        statechart_description=args.statechart_description,
-        statechart_preamble=args.statechart_preamble,
-        state_contracts=args.state_contracts,
-        state_action=args.state_action,
-        transition_contracts=args.transition_contracts,
-        transition_action=args.transition_action,
+        based_on=known_args.based_on,
+        statechart_name=known_args.statechart_name,
+        statechart_description=known_args.statechart_description,
+        statechart_preamble=known_args.statechart_preamble,
+        state_contracts=known_args.state_contracts,
+        state_action=known_args.state_action,
+        transition_contracts=known_args.transition_contracts,
+        transition_action=known_args.transition_action,
     )
 
-    print(exporter.export())
+    print(exporter.export())  # noqa: T201
     return 0
 
 

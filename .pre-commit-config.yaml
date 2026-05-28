@@ -3,6 +3,18 @@ repos:
     rev: "v2.21.2"
     hooks:
       - id: pyproject-fmt
+  - repo: https://github.com/pre-commit/pygrep-hooks
+    rev: v1.10.0
+    hooks:
+    - id: python-use-type-annotations
+    - id: rst-backticks
+    - id: rst-directive-colons
+    - id: rst-inline-touching-normal
+    - id: text-unicode-replacement-char
+    - id: python-check-blanket-noqa
+    - id: python-check-blanket-type-ignore
+    - id: python-check-mock-methods
+    - id: python-no-log-warn
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v6.0.0
     hooks:
@@ -23,9 +35,5 @@ repos:
       - id: pyrefly-check
         name: Pyrefly (type checking)
         args: [--output-format=min-text]
+        language: system
         pass_filenames: false
-        additional_dependencies:
-          - pytest
-          - schema
-          - ruamel-yaml
-          - behave

@@ -1,19 +1,23 @@
-import os
+from __future__ import annotations
+
+from pathlib import Path
 
 import pytest
 
 from sismic.bdd import execute_bdd, steps
 from sismic.bdd.__main__ import cli
 from sismic.exceptions import StatechartError
-from sismic.interpreter import Event
 from sismic.io import import_from_yaml
+from sismic.model import Event
+
+EXAMPLES_PATH = Path(__file__).parents[1] / "docs" / "examples"
 
 
 def test_elevator(elevator):
     assert (
         execute_bdd(
             elevator.statechart,
-            [os.path.join("docs", "examples", "elevator", "elevator.feature")],
+            [EXAMPLES_PATH / "elevator" / "elevator.feature"],
         )
         == 0
     )
@@ -24,7 +28,7 @@ class TestMicrowave:
     def property_statecharts(self):
         statecharts = []
         for filename in ["heating_off_property", "heating_on_property", "heating_property"]:
-            with open(os.path.join("docs", "examples", "microwave", filename + ".yaml")) as f:
+            with (EXAMPLES_PATH / "microwave" / f"{filename}.yaml").open() as f:
                 statecharts.append(import_from_yaml(f))
         return statecharts
 
@@ -32,7 +36,7 @@ class TestMicrowave:
         assert (
             execute_bdd(
                 microwave.statechart,
-                [os.path.join("docs", "examples", "microwave", "heating.feature")],
+                [EXAMPLES_PATH / "microwave" / "heating.feature"],
             )
             == 0
         )
@@ -41,7 +45,7 @@ class TestMicrowave:
         assert (
             execute_bdd(
                 microwave.statechart,
-                [os.path.join("docs", "examples", "microwave", "heating.feature")],
+                [EXAMPLES_PATH / "microwave" / "heating.feature"],
                 property_statecharts=property_statecharts,
             )
             == 0
@@ -53,8 +57,8 @@ class TestMicrowave:
         assert (
             execute_bdd(
                 microwave.statechart,
-                [os.path.join("docs", "examples", "microwave", f + ".feature") for f in features],
-                step_filepaths=[os.path.join("docs", "examples", "microwave", "steps.py")],
+                [EXAMPLES_PATH / "microwave" / f"{f}.feature" for f in features],
+                step_filepaths=[EXAMPLES_PATH / "microwave" / "steps.py"],
             )
             == 0
         )
@@ -65,8 +69,8 @@ class TestMicrowave:
         assert (
             execute_bdd(
                 microwave.statechart,
-                [os.path.join("docs", "examples", "microwave", f + ".feature") for f in features],
-                step_filepaths=[os.path.join("docs", "examples", "microwave", "steps.py")],
+                [EXAMPLES_PATH / "microwave" / f"{f}.feature" for f in features],
+                step_filepaths=[EXAMPLES_PATH / "microwave" / "steps.py"],
                 property_statecharts=property_statecharts,
             )
             == 0
@@ -105,7 +109,7 @@ class TestSteps:
 
         def state_for(name):
             if name == "unknown state":
-                raise StatechartError()
+                raise StatechartError
             return mocker.DEFAULT
 
         context.interpreter.statechart.state_for = mocker.MagicMock(side_effect=state_for)

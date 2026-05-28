@@ -1,7 +1,7 @@
 import pytest
 
 from sismic.exceptions import PropertyStatechartError
-from sismic.interpreter import Event, InternalEvent, MetaEvent
+from sismic.model import Event, InternalEvent, MetaEvent
 
 
 class TestInterpreterMetaEvents:
@@ -20,10 +20,6 @@ class TestInterpreterMetaEvents:
         microwave.bind_property_statechart(None, interpreter_klass=prop_sc_call)
 
         return prop_sc
-
-    def test_deprecated_interpreter(self, microwave):
-        with pytest.warns(DeprecationWarning):
-            microwave.bind_property_statechart(microwave)
 
     def test_synchronised_time(self, microwave, property_statechart):
         assert microwave.time == property_statechart.time

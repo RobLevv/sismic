@@ -1,31 +1,15 @@
-from abc import ABCMeta
-
-__all__ = [
-    "ActionStateMixin",
-    "BasicState",
-    "CompositeStateMixin",
-    "CompoundState",
-    "ContractMixin",
-    "DeepHistoryState",
-    "FinalState",
-    "HistoryStateMixin",
-    "OrthogonalState",
-    "ShallowHistoryState",
-    "StateMixin",
-    "Transition",
-    "TransitionStateMixin",
-]
+from __future__ import annotations
 
 
-class ContractMixin(metaclass=ABCMeta):
+class ContractMixin:
     """Mixin with a contract: preconditions, postconditions and invariants."""
 
     def __init__(self) -> None:
-        self.preconditions = []  # type: List[str]
-        self.postconditions = []  # type: List[str]
-        self.invariants = []  # type: List[str]
+        self.preconditions: list[str] = []
+        self.postconditions: list[str] = []
+        self.invariants: list[str] = []
 
-    def __eq__(self, other):
+    def __eq__(self, other: object) -> bool:
         if isinstance(other, ContractMixin):
             return (
                 self.preconditions == other.preconditions
@@ -34,97 +18,104 @@ class ContractMixin(metaclass=ABCMeta):
             )
         return NotImplemented
 
+    def __hash__(self) -> int:
+        return hash((self.preconditions, self.postconditions, self.invariants))
 
-class StateMixin(metaclass=ABCMeta):
-    """
-    State element with a name.
+
+class StateMixin:
+    """State element with a name.
 
     :param name: name of the state
     """
 
     def __init__(self, name: str) -> None:
-        self._name = name
+        self.name = name
 
-    @property
-    def name(self):
-        return self._name
-
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"{self.__class__.__name__}({self.name!r})"
 
-    def __eq__(self, other):
+    def __eq__(self, other: object) -> bool:
         if isinstance(other, StateMixin):
             return self.name == other.name
         return NotImplemented
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         return hash(self.name)
 
 
-class ActionStateMixin(metaclass=ABCMeta):
-    """
-    State that can define actions on entry and on exit.
+class ActionStateMixin:
+    """State that can define actions on entry and on exit.
 
     :param on_entry: code to execute when state is entered
     :param on_exit: code to execute when state is exited
     """
 
-    def __init__(self, on_entry: str = None, on_exit: str = None) -> None:
+    def __init__(self, on_entry: str | None = None, on_exit: str | None = None) -> None:
         self.on_entry = on_entry
         self.on_exit = on_exit
 
-    def __eq__(self, other):
+    def __eq__(self, other: object) -> bool:
         if isinstance(other, ActionStateMixin):
             return self.on_entry == other.on_exit and self.on_exit == other.on_exit
         return NotImplemented
 
+    def __hash__(self) -> int:
+        return hash((self.on_entry, self.on_exit))
 
-class TransitionStateMixin(metaclass=ABCMeta):
+
+class TransitionStateMixin:
     """A simple state can host transitions"""
 
-    def __eq__(self, other):
+    def __eq__(self, other: object) -> bool:
         return isinstance(other, TransitionStateMixin)
 
+    def __hash__(self) -> int:
+        return hash(self)
 
-class CompositeStateMixin(metaclass=ABCMeta):
+
+class CompositeStateMixin:
     """Composite state can have children states."""
 
-    def __eq__(self, other):
+    def __eq__(self, other: object) -> bool:
         return isinstance(other, CompositeStateMixin)
 
+    def __hash__(self) -> int:
+        return hash(self)
 
-class HistoryStateMixin(metaclass=ABCMeta):
-    """
-    History state has a memory that can be resumed.
+
+class HistoryStateMixin:
+    """History state has a memory that can be resumed.
 
     :param memory: name of the initial state
     """
 
-    def __init__(self, memory: str = None) -> None:
+    def __init__(self, memory: str | None = None) -> None:
         self.memory = memory
 
-    def __eq__(self, other):
+    def __eq__(self, other: object) -> bool:
         if isinstance(other, HistoryStateMixin):
             return self.memory == other.memory
         return NotImplemented
 
+    def __hash__(self) -> int:
+        return hash(self.memory)
+
 
 class BasicState(ContractMixin, StateMixin, ActionStateMixin, TransitionStateMixin):
-    """
-    A basic state, with a name, transitions, actions, etc. but no child state.
+    """A basic state, with a name, transitions, actions, etc. but no child state.
 
     :param name: name of this state
     :param on_entry: code to execute when state is entered
     :param on_exit: code to execute when state is exited
     """
 
-    def __init__(self, name: str, on_entry: str = None, on_exit: str = None) -> None:
+    def __init__(self, name: str, on_entry: str | None = None, on_exit: str | None = None) -> None:
         ContractMixin.__init__(self)
         StateMixin.__init__(self, name)
         ActionStateMixin.__init__(self, on_entry, on_exit)
         TransitionStateMixin.__init__(self)
 
-    def __eq__(self, other):
+    def __eq__(self, other: object) -> bool:
         if isinstance(other, BasicState):
             return (
                 ContractMixin.__eq__(self, other)
@@ -134,6 +125,9 @@ class BasicState(ContractMixin, StateMixin, ActionStateMixin, TransitionStateMix
             )
         return NotImplemented
 
+    def __hash__(self) -> int:
+        return hash(self)
+
 
 class CompoundState(
     ContractMixin,
@@ -142,8 +136,7 @@ class CompoundState(
     TransitionStateMixin,
     CompositeStateMixin,
 ):
-    """
-    Compound states must have children states.
+    """Compound states must have children states.
 
     :param name: name of this state
     :param initial: name of the initial state
@@ -154,9 +147,9 @@ class CompoundState(
     def __init__(
         self,
         name: str,
-        initial: str = None,
-        on_entry: str = None,
-        on_exit: str = None,
+        initial: str | None = None,
+        on_entry: str | None = None,
+        on_exit: str | None = None,
     ) -> None:
         ContractMixin.__init__(self)
         StateMixin.__init__(self, name)
@@ -165,7 +158,7 @@ class CompoundState(
         CompositeStateMixin.__init__(self)
         self.initial = initial
 
-    def __eq__(self, other):
+    def __eq__(self, other: object) -> bool:
         if isinstance(other, CompoundState):
             return (
                 ContractMixin.__eq__(self, other)
@@ -176,6 +169,9 @@ class CompoundState(
             )
         return NotImplemented
 
+    def __hash__(self) -> int:
+        return hash((self, self.initial))
+
 
 class OrthogonalState(
     ContractMixin,
@@ -184,22 +180,21 @@ class OrthogonalState(
     TransitionStateMixin,
     CompositeStateMixin,
 ):
-    """
-    Orthogonal states run their children simultaneously.
+    """Orthogonal states run their children simultaneously.
 
     :param name: name of this state
     :param on_entry: code to execute when state is entered
     :param on_exit: code to execute when state is exited
     """
 
-    def __init__(self, name: str, on_entry: str = None, on_exit: str = None) -> None:
+    def __init__(self, name: str, on_entry: str | None = None, on_exit: str | None = None) -> None:
         ContractMixin.__init__(self)
         StateMixin.__init__(self, name)
         ActionStateMixin.__init__(self, on_entry, on_exit)
         TransitionStateMixin.__init__(self)
         CompositeStateMixin.__init__(self)
 
-    def __eq__(self, other):
+    def __eq__(self, other: object) -> bool:
         if isinstance(other, OrthogonalState):
             return (
                 ContractMixin.__eq__(self, other)
@@ -210,10 +205,12 @@ class OrthogonalState(
             )
         return NotImplemented
 
+    def __hash__(self) -> int:
+        return hash(self)
+
 
 class ShallowHistoryState(ContractMixin, StateMixin, ActionStateMixin, HistoryStateMixin):
-    """
-    A shallow history state resumes the execution of its parent.
+    """A shallow history state resumes the execution of its parent.
     It activates the latest visited state of its parent.
 
     :param name: name of this state
@@ -225,16 +222,16 @@ class ShallowHistoryState(ContractMixin, StateMixin, ActionStateMixin, HistorySt
     def __init__(
         self,
         name: str,
-        on_entry: str = None,
-        on_exit: str = None,
-        memory: str = None,
+        on_entry: str | None = None,
+        on_exit: str | None = None,
+        memory: str | None = None,
     ) -> None:
         ContractMixin.__init__(self)
         StateMixin.__init__(self, name)
         ActionStateMixin.__init__(self, on_entry, on_exit)
         HistoryStateMixin.__init__(self, memory)
 
-    def __eq__(self, other):
+    def __eq__(self, other: object) -> bool:
         if isinstance(other, ShallowHistoryState):
             return (
                 ContractMixin.__eq__(self, other)
@@ -244,10 +241,12 @@ class ShallowHistoryState(ContractMixin, StateMixin, ActionStateMixin, HistorySt
             )
         return NotImplemented
 
+    def __hash__(self) -> int:
+        return hash(self)
+
 
 class DeepHistoryState(ContractMixin, StateMixin, ActionStateMixin, HistoryStateMixin):
-    """
-    A deep history state resumes the execution of its parent, and of every nested
+    """A deep history state resumes the execution of its parent, and of every nested
     active states in its parent.
 
     :param name: name of this state
@@ -259,16 +258,16 @@ class DeepHistoryState(ContractMixin, StateMixin, ActionStateMixin, HistoryState
     def __init__(
         self,
         name: str,
-        on_entry: str = None,
-        on_exit: str = None,
-        memory: str = None,
+        on_entry: str | None = None,
+        on_exit: str | None = None,
+        memory: str | None = None,
     ) -> None:
         ContractMixin.__init__(self)
         StateMixin.__init__(self, name)
         ActionStateMixin.__init__(self, on_entry, on_exit)
         HistoryStateMixin.__init__(self, memory)
 
-    def __eq__(self, other):
+    def __eq__(self, other: object) -> bool:
         if isinstance(other, DeepHistoryState):
             return (
                 ContractMixin.__eq__(self, other)
@@ -278,22 +277,24 @@ class DeepHistoryState(ContractMixin, StateMixin, ActionStateMixin, HistoryState
             )
         return NotImplemented
 
+    def __hash__(self) -> int:
+        return hash(self)
+
 
 class FinalState(ContractMixin, StateMixin, ActionStateMixin):
-    """
-    Final state has NO transition and is used to detect state machine termination.
+    """Final state has NO transition and is used to detect state machine termination.
 
     :param name: name of this state
     :param on_entry: code to execute when state is entered
     :param on_exit: code to execute when state is exited
     """
 
-    def __init__(self, name: str, on_entry: str = None, on_exit: str = None) -> None:
+    def __init__(self, name: str, on_entry: str | None = None, on_exit: str | None = None) -> None:
         ContractMixin.__init__(self)
         StateMixin.__init__(self, name)
         ActionStateMixin.__init__(self, on_entry, on_exit)
 
-    def __eq__(self, other):
+    def __eq__(self, other: object) -> bool:
         if isinstance(other, FinalState):
             return (
                 ContractMixin.__eq__(self, other)
@@ -302,10 +303,12 @@ class FinalState(ContractMixin, StateMixin, ActionStateMixin):
             )
         return NotImplemented
 
+    def __hash__(self) -> int:
+        return hash(self)
+
 
 class Transition(ContractMixin):
-    """
-    Represent a transition from a source state to a target state.
+    """Represent a transition from a source state to a target state.
 
     A transition can be eventless (no event) or internal (no target).
     A condition (code as string) can be specified as a guard.
@@ -325,11 +328,11 @@ class Transition(ContractMixin):
     def __init__(
         self,
         source: str,
-        target: str = None,
-        event: str = None,
-        guard: str = None,
-        action: str = None,
-        priority=None,
+        target: str | None = None,
+        event: str | None = None,
+        guard: str | None = None,
+        action: str | None = None,
+        priority: int | None = None,
     ) -> None:
         ContractMixin.__init__(self)
         self._source = source
@@ -337,27 +340,35 @@ class Transition(ContractMixin):
         self.event = event
         self.guard = guard
         self.action = action
-        self.priority = 0 if priority is None else priority
+        self.priority = priority or 0
 
     @property
-    def source(self):
+    def source(self) -> str:
         return self._source
 
-    @property
-    def target(self):
-        return self._target
+    @source.setter
+    def source(self, new: str) -> None:
+        self._source = new
 
     @property
-    def internal(self):
+    def target(self) -> str | None:
+        return self._target
+
+    @target.setter
+    def target(self, new: str | None) -> None:
+        self._target = new
+
+    @property
+    def internal(self) -> bool:
         """Boolean indicating whether this transition is an internal transition."""
         return self._target is None
 
     @property
-    def eventless(self):
+    def eventless(self) -> bool:
         """Boolean indicating whether this transition is an eventless transition."""
         return self.event is None
 
-    def __eq__(self, other):
+    def __eq__(self, other: object) -> bool:
         if isinstance(other, Transition):
             return (
                 ContractMixin.__eq__(self, other)
@@ -370,10 +381,10 @@ class Transition(ContractMixin):
             )
         return NotImplemented
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"Transition({self.source!r}, {self.target!r}, event={self.event!r})"
 
-    def __str__(self):
+    def __str__(self) -> str:
         return "{} -> {}{} [{}] -> {}".format(
             self.source,
             "" if self.priority == 0 else f"{self.priority}:",
@@ -382,5 +393,5 @@ class Transition(ContractMixin):
             self.target or "",
         )
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         return hash(self.source)

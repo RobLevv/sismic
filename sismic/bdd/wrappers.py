@@ -1,21 +1,29 @@
+from __future__ import annotations
+
 import os
 import shutil
 import tempfile
-from collections.abc import Callable
+from pathlib import Path
+from typing import TYPE_CHECKING
 
 from behave import given, then, when
 from behave.__main__ import run_behave
 from behave.configuration import Configuration
 
-from ..interpreter import Interpreter
-from ..model import Statechart
+from sismic.interpreter import Interpreter
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
+    from behave.runner import Context
+
+    from sismic.model import Statechart
 
 __all__ = ["execute_bdd", "map_action", "map_assertion"]
 
 
 def map_action(step_text: str, existing_step_or_steps: str | list[str]) -> None:
-    """
-    Map new "given"/"when" steps to one or many existing one(s).
+    """Map new "given"/"when" steps to one or many existing one(s).
     Parameters are propagated to the original step(s) as well, as expected.
 
     Examples:
@@ -32,17 +40,16 @@ def map_action(step_text: str, existing_step_or_steps: str | list[str]) -> None:
         existing_step_or_steps = "\nand ".join(existing_step_or_steps)
 
     @given(step_text)
-    def _(context, **kwargs):
+    def _(context: Context, **kwargs: object) -> None:
         context.execute_steps("Given " + existing_step_or_steps.format(**kwargs))
 
     @when(step_text)
-    def _(context, **kwargs):
+    def _(context: Context, **kwargs: object) -> None:
         context.execute_steps("When " + existing_step_or_steps.format(**kwargs))
 
 
 def map_assertion(step_text: str, existing_step_or_steps: str | list[str]) -> None:
-    """
-    Map a new "then" step to one or many existing one(s).
+    """Map a new "then" step to one or many existing one(s).
     Parameters are propagated to the original step(s) as well, as expected.
 
     map_assertion('door is open', 'state door open is active')
@@ -56,22 +63,21 @@ def map_assertion(step_text: str, existing_step_or_steps: str | list[str]) -> No
         existing_step_or_steps = "\nand ".join(existing_step_or_steps)
 
     @then(step_text)
-    def _(context, **kwargs):
+    def _(context: Context, **kwargs: object) -> None:
         context.execute_steps("Then " + existing_step_or_steps.format(**kwargs))
 
 
 def execute_bdd(
     statechart: Statechart,
-    feature_filepaths: list[str],
+    feature_filepaths: list[Path],
     *,
-    step_filepaths: list[str] = None,
-    property_statecharts: list[Statechart] = None,
+    step_filepaths: list[Path] | None = None,
+    property_statecharts: list[Statechart] | None = None,
     interpreter_klass: Callable[[Statechart], Interpreter] = Interpreter,
     debug_on_error: bool = False,
-    behave_parameters: list[str] = None,
+    behave_parameters: list[str] | None = None,
 ) -> int:
-    """
-    Execute BDD tests for a statechart.
+    """Execute BDD tests for a statechart.
 
     :param statechart: statechart to test
     :param feature_filepaths: list of filepaths to feature files.
@@ -99,29 +105,32 @@ def execute_bdd(
         config = Configuration(behave_parameters)
 
         # Paths to features
-        config.paths = feature_filepaths
+        config.paths = [f"{f}" for f in feature_filepaths]
+
+        environment_path = Path(tempdir) / "environment.py"
+        step_dir = Path(tempdir) / "steps"
 
         # Copy environment
-        with open(os.path.join(tempdir, "environment.py"), "w") as environment:
+        with environment_path.open("w") as environment:
             environment.write("from sismic.bdd.environment import *")
 
         # Path to environment
-        config.environment_file = os.path.join(tempdir, "environment.py")
+        config.environment_file = str(environment_path)
 
         # Add predefined steps
-        os.mkdir(os.path.join(tempdir, "steps"))
-        with open(os.path.join(tempdir, "steps", "__steps.py"), "w") as step:
+        step_dir.mkdir(parents=True, exist_ok=True)
+        with (step_dir / "__steps.py").open("w") as step:
             step.write("from sismic.bdd.steps import *")
 
         # Copy provided steps, if any
         for step_filepath in step_filepaths:
             shutil.copy(
                 step_filepath,
-                os.path.join(tempdir, "steps", os.path.split(step_filepath)[-1]),
+                step_dir / os.path.split(step_filepath)[-1],
             )
 
         # Path to steps
-        config.steps_dir = os.path.join(tempdir, "steps")
+        config.steps_dir = str(step_dir)
 
         # Put statechart and properties in user data
         config.update_userdata(

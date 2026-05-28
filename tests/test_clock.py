@@ -17,9 +17,9 @@ class TestSimulatedClock:
         clock.time += 1
         assert clock.time == 1
 
-    def test_monotonicity(self, clock):
+    def test_monotonicity(self, clock: SimulatedClock):
         clock.time = 10
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="Time must be monotonic"):
             clock.time = 0
 
     def test_automatic_increment(self, clock):
