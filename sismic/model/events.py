@@ -55,10 +55,9 @@ class Event(Generic[T]):
 
     def __repr__(self) -> str:
         if self.data:
-            return "{}({!r}, {})".format(
-                self.__class__.__name__,
-                self.name,
-                ", ".join(f"{k}={v!r}" for k, v in self.data.items()),
+            return (
+                f"{self.__class__.__name__}"
+                f"({self.name}, {', '.join(f'{k}={v!r}' for k, v in self.data.items())})"
             )
         return f"{self.__class__.__name__}({self.name!r})"
 

@@ -22,8 +22,7 @@ MacroSteps = MacroStep | list[MacroStep]
 
 
 def state_is_entered(steps: MacroSteps, name: str) -> bool:
-    """
-    Holds if state was entered during given steps.
+    """Holds if state was entered during given steps.
 
     :param steps: a macrostep or list of macrosteps
     :param name: name of a state
@@ -34,8 +33,7 @@ def state_is_entered(steps: MacroSteps, name: str) -> bool:
 
 
 def state_is_exited(steps: MacroSteps, name: str) -> bool:
-    """
-    Holds if state was exited during given steps.
+    """Holds if state was exited during given steps.
 
     :param steps: a macrostep or list of macrosteps
     :param name: name of a state
@@ -50,8 +48,7 @@ def event_is_fired(
     name: str | None,
     parameters: Mapping[str, Any] | None = None,
 ) -> bool:
-    """
-    Holds if an event was fired during given steps.
+    """Holds if an event was fired during given steps.
 
     If name is None, this function looks for any event.
     If parameters are provided, their values are compared with the respective
@@ -84,8 +81,7 @@ def event_is_consumed(
     name: str | None,
     parameters: Mapping[str, Any] | None = None,
 ) -> bool:
-    """
-    Holds if an event was consumed during given steps.
+    """Holds if an event was consumed during given steps.
 
     If name is None, this function looks for any event.
     If parameters are provided, their values are compared with the respective
@@ -116,8 +112,7 @@ def event_is_consumed(
 
 
 def transition_is_processed(steps: MacroSteps, transition: Transition | None = None) -> bool:
-    """
-    Holds if a transition was processed during given steps.
+    """Holds if a transition was processed during given steps.
 
     If no transition is provided, this function looks for any transition.
 
@@ -133,8 +128,7 @@ def transition_is_processed(steps: MacroSteps, transition: Transition | None = N
 
 
 def expression_holds(interpreter: Interpreter, expression: str) -> bool:
-    """
-    Holds if given expression holds.
+    """Holds if given expression holds.
 
     :param interpreter: current interpreter
     :param expression: expression to evaluate

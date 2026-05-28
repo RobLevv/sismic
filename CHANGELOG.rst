@@ -1,6 +1,17 @@
 Changelog
 =========
 
+
+2.0.0 (2026-05-28)
+-------------------
+
+ - (Breaking change): Drop python 3.9 support
+ - (Breaking change): Remove all deprecated features
+ - (Internal): Added tox config for local multi-version validation
+ - (Internal): Added ruff config to lint the codebase
+ - (Internal): Added pyrefly config to type check the codebase
+ -
+
 1.6.11 (2025-10-29)
 -------------------
 

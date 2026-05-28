@@ -20,7 +20,7 @@ class StopwatchApplication(tk.Frame):
         self.create_widgets()
 
         # Create a Stopwatch interpreter
-        with Path("stopwatch.yaml").pen() as f:
+        with Path("stopwatch.yaml").open() as f:
             statechart = import_from_yaml(f)
         self.interpreter = Interpreter(statechart)
         self.interpreter.clock.time = time.time()

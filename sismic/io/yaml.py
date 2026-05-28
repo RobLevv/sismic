@@ -82,8 +82,7 @@ def import_from_yaml(
     if text and filepath:
         raise TypeError("Either provide first argument or filepath argument, not both.")
     if filepath:
-        with Path(filepath).open() as f:
-            text = f.read()
+        text = Path(filepath).read_text(encoding="utf-8")
 
     yml = yaml.YAML(typ="safe", pure=True)
     data = yml.load(text)
@@ -112,7 +111,6 @@ def export_to_yaml(statechart: Statechart, filepath: str | None = None) -> str:
     yml.dump(export_to_dict(statechart), output)
 
     if filepath:
-        with Path(filepath).open("w") as f:
-            f.write(output.getvalue())
+        Path(filepath).write_text(output.getvalue())
 
     return output.getvalue()

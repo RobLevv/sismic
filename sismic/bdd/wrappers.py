@@ -40,11 +40,11 @@ def map_action(step_text: str, existing_step_or_steps: str | list[str]) -> None:
         existing_step_or_steps = "\nand ".join(existing_step_or_steps)
 
     @given(step_text)
-    def _(context: Context, **kwargs: object) -> None:
+    def _given_step(context: Context, **kwargs: object) -> None:
         context.execute_steps("Given " + existing_step_or_steps.format(**kwargs))
 
     @when(step_text)
-    def _(context: Context, **kwargs: object) -> None:
+    def _when_step(context: Context, **kwargs: object) -> None:
         context.execute_steps("When " + existing_step_or_steps.format(**kwargs))
 
 

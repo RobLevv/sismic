@@ -14,7 +14,7 @@ if TYPE_CHECKING:
 __all__ = ["Evaluator"]
 
 
-class Evaluator(metaclass=abc.ABCMeta):
+class Evaluator(abc.ABC):
     """Abstract base class for any evaluator.
 
     An instance of this class defines what can be done with piece of codes

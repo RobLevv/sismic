@@ -37,7 +37,7 @@ def writer():
 def microwave(request):
     if request.param:
         sc = import_from_yaml(
-            filepath=EXAMPLES_PATH / "microwave" / "microwave_with_contracts.yaml"
+            filepath=EXAMPLES_PATH / "microwave" / "microwave_with_contracts.yaml",
         )
     else:
         sc = import_from_yaml(filepath=EXAMPLES_PATH / "microwave" / "microwave.yaml")

@@ -10,7 +10,7 @@ if TYPE_CHECKING:
 __all__ = ["Clock", "SimulatedClock", "SynchronizedClock", "UtcClock"]
 
 
-class Clock(metaclass=abc.ABCMeta):
+class Clock(abc.ABC):
     """Abstract implementation of a clock, as used by an interpreter.
 
     The purpose of a clock instance is to provide a way for the interpreter

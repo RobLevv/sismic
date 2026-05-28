@@ -52,7 +52,7 @@ class PlantUMLExporter:
             for line in self.based_on.splitlines():
                 matches = re.findall(r"(\[\*\]|[a-zA-Z0-9]+) -([^ ]*)> (\[\*\]|[a-zA-Z0-9]+)", line)
                 if matches:
-                    self._based_on_arrows[(matches[0][0], matches[0][2])] = f"-{matches[0][1]}>"
+                    self._based_on_arrows[matches[0][0], matches[0][2]] = f"-{matches[0][1]}>"
 
         self._output: list[str] = []
         self._indent = 0
@@ -320,8 +320,7 @@ def export_to_plantuml(
             "Parameters based_on and based_on_filepath cannot both be provided at the same time.",
         )
     if based_on_filepath:
-        with Path(based_on_filepath).open() as f:
-            based_on = f.read()
+        based_on = Path(based_on_filepath).read_text()
 
     exporter = PlantUMLExporter(
         statechart,
@@ -338,8 +337,7 @@ def export_to_plantuml(
     output = exporter.export()
 
     if filepath:
-        with Path(filepath).open("w") as f:
-            f.write(output)
+        Path(filepath).write_text(output)
 
     return output
 

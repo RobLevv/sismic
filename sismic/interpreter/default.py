@@ -474,10 +474,13 @@ class Interpreter:
             exposed_event = event if has_event else None
 
             for _, depth_transitions in sorted_groupby(
-                transitions, key=depth_order, reverse=inner_first
+                transitions,
+                key=depth_order,
+                reverse=inner_first,
             ):
                 for source, state_transitions in sorted_groupby(
-                    depth_transitions, key=self.__state_order
+                    depth_transitions,
+                    key=self.__state_order,
                 ):
                     # Do not considered ignored states
                     if source in ignored_states:
@@ -501,8 +504,7 @@ class Interpreter:
 
                         # Ignore ancestors/descendants w.r.t. inner-first/source state
                         if has_found_transitions:
-                            for state in ignored_state_selector(source):
-                                ignored_states.add(state)
+                            ignored_states.update(ignored_state_selector(source))
                             # Also ignore current state, as we found transitions in a higher
                             # priority class
                             ignored_states.add(source)
