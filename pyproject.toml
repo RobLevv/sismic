@@ -37,7 +37,7 @@ classifiers = [
 dependencies = [
   "behave @ git+https://github.com/behave/behave.git@7aeb776387f2c8c39d3b8d763ffe0195e3341791",
   "pycycle>=0.0.8",
-  "ruamel-yaml>=0.18.2",
+  "pyyaml>=6.0.3",
   "schema @ git+https://github.com/keleshev/schema.git@a2d40e1f0d91fd91513b78d51b4ee6d550326afa",
 ]
 urls.Homepage = "https://github.com/AlexandreDecan/sismic/"
@@ -46,11 +46,14 @@ scripts.sismic-plantuml = "sismic.io.plantuml:cli"
 
 [dependency-groups]
 dev = [
+  "py-spy>=0.4.2",
   "pyrefly>=1",
   "pytest>=5",
   "pytest-cov>=7.1",
   "pytest-mock>=3",
+  "pytest-profiling>=1.8.1",
   "pytest-testmon>=2.2",
+  "snakeviz>=2.2.2",
   "sphinx<7",
   "sphinx-autodoc-typehints>=1.2.5,!=1.5",
   "tox-uv>=1.35.2",

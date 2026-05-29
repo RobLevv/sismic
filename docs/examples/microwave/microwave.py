@@ -22,8 +22,7 @@ class MicrowaveApplication(tk.Frame):
         self.create_widgets()
 
         # Create a Stopwatch interpreter
-        with Path("microwave.yaml").open(encoding="utf-8") as f:
-            statechart = import_from_yaml(f)
+        statechart = import_from_yaml(Path("microwave.yaml"))
         self.interpreter = Interpreter(statechart)
 
         # Bind interpreter events to the GUI

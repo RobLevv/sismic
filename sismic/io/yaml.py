@@ -1,10 +1,10 @@
 from io import StringIO
 from pathlib import Path
-from typing import TextIO
 
 import schema
-from ruamel import yaml
+import yaml
 from schema import Optional, Or, Schema, Use
+from yaml import CSafeDumper, CSafeLoader
 
 from sismic.model import Statechart
 
@@ -53,8 +53,7 @@ class SCHEMA:
 
 
 def import_from_yaml(
-    text: TextIO | str | None = None,
-    filepath: Path | None = None,
+    yaml_input: Path | str,
     *,
     ignore_schema: bool = False,
     ignore_validation: bool = False,
@@ -72,17 +71,11 @@ def import_from_yaml(
     :param ignore_validation: set to *True* to disable statechart validation.
     :return: a *Statechart* instance
     """
-    if not text and not filepath:
-        raise TypeError(
-            "A YAML must be provided, either using first argument or filepath argument.",
-        )
-    if text and filepath:
-        raise TypeError("Either provide first argument or filepath argument, not both.")
-    if filepath:
-        text = Path(filepath).read_text(encoding="utf-8")
-
-    yml = yaml.YAML(typ="safe", pure=True)
-    data = yml.load(text)
+    if isinstance(yaml_input, str):
+        data = yaml.load(StringIO(yaml_input), Loader=CSafeLoader)
+    else:
+        with yaml_input.open() as yaml_file:
+            data = yaml.load(yaml_file, Loader=CSafeLoader)
 
     if not ignore_schema:
         data = schema.Schema(SCHEMA.statechart).validate(data)
@@ -94,7 +87,7 @@ def import_from_yaml(
     return sc
 
 
-def export_to_yaml(statechart: Statechart, filepath: str | None = None) -> str:
+def export_to_yaml(statechart: Statechart, filepath: Path | None = None) -> str:
     """Export given *Statechart* instance to YAML. Its YAML representation is returned by
     this function. Automatically save the output to filepath, if provided.
 
@@ -102,12 +95,8 @@ def export_to_yaml(statechart: Statechart, filepath: str | None = None) -> str:
     :param filepath: save output to given filepath, if provided
     :return: A textual YAML representation
     """
-    output = StringIO()
-
-    yml = yaml.YAML(typ="safe", pure=True)
-    yml.dump(export_to_dict(statechart), output)
-
     if filepath:
-        Path(filepath).write_text(output.getvalue())
+        with filepath.open("w") as export_file:
+            yaml.dump(export_to_dict(statechart), export_file, Dumper=CSafeDumper)
 
-    return output.getvalue()
+    return yaml.dump(export_to_dict(statechart), Dumper=CSafeDumper)

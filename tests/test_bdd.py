@@ -24,11 +24,11 @@ def test_elevator(elevator):
 class TestMicrowave:
     @pytest.fixture
     def property_statecharts(self):
-        statecharts = []
-        for filename in ["heating_off_property", "heating_on_property", "heating_property"]:
-            with (EXAMPLES_PATH / "microwave" / f"{filename}.yaml").open() as f:
-                statecharts.append(import_from_yaml(f))
-        return statecharts
+
+        return [
+            import_from_yaml(EXAMPLES_PATH / "microwave" / f"{filename}.yaml")
+            for filename in ["heating_off_property", "heating_on_property", "heating_property"]
+        ]
 
     def test_microwave(self, microwave):
         assert (

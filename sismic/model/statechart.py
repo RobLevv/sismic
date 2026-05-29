@@ -1,6 +1,6 @@
 from collections.abc import Callable, Iterable
 from copy import deepcopy
-from typing import Self, cast
+from typing import cast
 
 from sismic.exceptions import StatechartError
 from sismic.model import (
@@ -506,7 +506,7 @@ class Statechart:
 
     def copy_from_statechart(
         self,
-        statechart: Self,
+        statechart: "Statechart",
         *,
         source: str,
         replace: str,

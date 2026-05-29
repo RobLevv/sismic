@@ -7,8 +7,7 @@ from sismic.io import import_from_yaml
 
 class MicrowaveTests(unittest.TestCase):
     def setUp(self) -> None:
-        with Path("microwave.yaml").open() as f:
-            sc = import_from_yaml(f)
+        sc = import_from_yaml(Path("microwave.yaml"))
 
         self.oven = Interpreter(sc)
         self.oven.execute_once()

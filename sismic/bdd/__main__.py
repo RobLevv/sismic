@@ -1,6 +1,7 @@
 import argparse
 import sys
 from collections.abc import Sequence
+from pathlib import Path
 
 from sismic.io import import_from_yaml
 
@@ -60,10 +61,10 @@ def cli(args: Sequence[str] | None = None) -> int:
     if known_args.show_steps:
         parameters.append("--steps")
 
-    statechart = import_from_yaml(filepath=known_args.statechart)
+    statechart = import_from_yaml(Path(known_args.statechart))
 
     property_statecharts = [
-        import_from_yaml(filepath=property_statechart)
+        import_from_yaml(Path(property_statechart))
         for property_statechart in known_args.properties or []
     ]
 

@@ -1,7 +1,7 @@
 import bisect
 from collections.abc import Callable, Iterable, Mapping
 from itertools import combinations
-from typing import Any, Self, cast
+from typing import Any, cast
 
 from sismic.clock import Clock, SimulatedClock, SynchronizedClock
 from sismic.code.evaluator import Evaluator
@@ -173,7 +173,7 @@ class Interpreter:
 
     def bind(
         self,
-        interpreter_or_callable: Self | Callable[[Event], Any],
+        interpreter_or_callable: "Interpreter | Callable[[Event], Any]",
     ) -> Callable[[MetaEvent], Any]:
         """Bind an interpreter (or a callable) to the current interpreter.
 
@@ -238,7 +238,7 @@ class Interpreter:
         event_or_name: str | Event,
         *event_or_names: str | Event,
         **parameters: str | int | Event | None,
-    ) -> Self:
+    ) -> "Interpreter":
         """Create and queue given events to the external event queue.
 
         If an event has a `delay` parameter, it will be processed by the first call to

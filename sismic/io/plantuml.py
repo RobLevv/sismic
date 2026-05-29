@@ -410,7 +410,7 @@ def cli(args: Sequence[str] | None = None) -> int:
 
     known_args, _parameters = parser.parse_known_args(args)
 
-    statechart = import_from_yaml(filepath=known_args.statechart)
+    statechart = import_from_yaml(Path(known_args.statechart))
 
     if known_args.based_on:
         with Path(known_args.based_on).open() as f:

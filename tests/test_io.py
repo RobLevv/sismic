@@ -28,13 +28,6 @@ def test_yaml_parser_types_handling(data):
     assert isinstance(item, str)
 
 
-def test_import_from_yaml_args():
-    with pytest.raises(TypeError):
-        import_from_yaml()
-    with pytest.raises(TypeError):
-        import_from_yaml("A", filepath=Path("B"))
-
-
 class TestImportFromYaml:
     def test_import_example_from_tests(self, example_from_tests):
         assert isinstance(example_from_tests, Statechart)
@@ -157,7 +150,7 @@ class TestExportToPlantUML:
 
     def test_cli(self, capsys):
         filepath = Path("docs/examples/elevator/elevator.yaml")
-        statechart = import_from_yaml(filepath=filepath)
+        statechart = import_from_yaml(filepath)
 
         # Check default parameters
         cli([f"{filepath}"])
