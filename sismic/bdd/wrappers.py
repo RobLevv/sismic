@@ -1,25 +1,16 @@
-from __future__ import annotations
-
 import os
 import shutil
 import tempfile
+from collections.abc import Callable
 from pathlib import Path
-from typing import TYPE_CHECKING
 
 from behave import given, then, when
 from behave.__main__ import run_behave
 from behave.configuration import Configuration
+from behave.runner import Context
 
 from sismic.interpreter import Interpreter
-
-if TYPE_CHECKING:
-    from collections.abc import Callable
-
-    from behave.runner import Context
-
-    from sismic.model import Statechart
-
-__all__ = ["execute_bdd", "map_action", "map_assertion"]
+from sismic.model import Statechart
 
 
 def map_action(step_text: str, existing_step_or_steps: str | list[str]) -> None:

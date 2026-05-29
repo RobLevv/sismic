@@ -1,15 +1,10 @@
 """Group-by util."""
 
-from __future__ import annotations
-
 from collections import defaultdict
-from typing import TYPE_CHECKING, TypeVar
+from collections.abc import Callable, Iterable
+from typing import TypeVar
 
 from sismic.model import Transition
-
-if TYPE_CHECKING:
-    from collections.abc import Callable, Iterable
-
 
 T = TypeVar("T", bound=str | int)
 

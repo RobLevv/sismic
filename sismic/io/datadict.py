@@ -1,6 +1,5 @@
-from __future__ import annotations
-
-from typing import TYPE_CHECKING, Any, cast
+from collections.abc import Mapping
+from typing import Any, cast
 
 from sismic.exceptions import StatechartError
 from sismic.model import (
@@ -17,11 +16,6 @@ from sismic.model import (
     Transition,
     TransitionStateMixin,
 )
-
-if TYPE_CHECKING:
-    from collections.abc import Mapping
-
-__all__ = ["export_to_dict", "import_from_dict"]
 
 
 def import_from_dict(data: Mapping[str, Any]) -> Statechart:

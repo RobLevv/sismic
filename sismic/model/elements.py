@@ -1,6 +1,3 @@
-from __future__ import annotations
-
-
 class ContractMixin:
     """Mixin with a contract: preconditions, postconditions and invariants."""
 

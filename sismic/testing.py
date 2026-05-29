@@ -2,21 +2,12 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
-from .model import MacroStep, Transition
+from sismic.model import MacroStep, Transition
 
 if TYPE_CHECKING:
     from collections.abc import Mapping
 
-    from .interpreter import Interpreter
-
-__all__ = [
-    "event_is_consumed",
-    "event_is_fired",
-    "expression_holds",
-    "state_is_entered",
-    "state_is_exited",
-    "transition_is_processed",
-]
+    from sismic.interpreter import Interpreter
 
 MacroSteps = MacroStep | list[MacroStep]
 
@@ -28,7 +19,8 @@ def state_is_entered(steps: MacroSteps, name: str) -> bool:
     :param name: name of a state
     :return: given state was entered
     """
-    steps = steps if isinstance(steps, list) else [steps]
+    if isinstance(steps, MacroStep):
+        return name in steps.entered_states
     return any(name in step.entered_states for step in steps)
 
 
@@ -39,7 +31,8 @@ def state_is_exited(steps: MacroSteps, name: str) -> bool:
     :param name: name of a state
     :return: given state was exited
     """
-    steps = steps if isinstance(steps, list) else [steps]
+    if isinstance(steps, MacroStep):
+        return name in steps.exited_states
     return any(name in step.exited_states for step in steps)
 
 

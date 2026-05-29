@@ -1,12 +1,10 @@
-from __future__ import annotations
-
 import bisect
-import warnings
+from collections.abc import Callable, Iterable, Mapping
 from itertools import combinations
-from typing import TYPE_CHECKING, Any, cast
+from typing import Any, Self, cast
 
-from sismic.clock import SynchronizedClock
-from sismic.clock.clock import Clock, SimulatedClock
+from sismic.clock import Clock, SimulatedClock, SynchronizedClock
+from sismic.code.evaluator import Evaluator
 from sismic.code.python import PythonEvaluator
 from sismic.exceptions import (
     ConflictingTransitionsError,
@@ -15,7 +13,6 @@ from sismic.exceptions import (
     PostconditionError,
     PreconditionError,
 )
-from sismic.interpreter.listener import PropertyStatechartListener
 from sismic.model import (
     CompoundState,
     DeepHistoryState,
@@ -33,14 +30,7 @@ from sismic.model import (
 )
 from sismic.utilities import sorted_groupby
 
-from .listener import InternalEventListener
-
-if TYPE_CHECKING:
-    from collections.abc import Callable, Iterable, Mapping
-
-    from sismic.code.evaluator import Evaluator
-
-__all__ = ["Interpreter"]
+from .listener import InternalEventListener, PropertyStatechartListener
 
 
 class _KeyifyList:
@@ -183,7 +173,7 @@ class Interpreter:
 
     def bind(
         self,
-        interpreter_or_callable: Interpreter | Callable[[Event], Any],
+        interpreter_or_callable: Self | Callable[[Event], Any],
     ) -> Callable[[MetaEvent], Any]:
         """Bind an interpreter (or a callable) to the current interpreter.
 
@@ -225,8 +215,6 @@ class Interpreter:
         corresponding property statechart is not satisfied. Property statecharts are automatically
         executed when they are bound to an interpreter.
 
-        Since Sismic 1.4.0: passing an interpreter as first argument is deprecated.
-
         This method is a higher-level interface for ``self.attach``.
         If ``x = interpreter.bind_property_statechart(...)``, use ``interpreter.detach(x)`` to
         unbind a previously bound property statechart.
@@ -236,18 +224,9 @@ class Interpreter:
             and a named parameter clock. Default to Interpreter.
         :return: the resulting attached listener.
         """
-        if isinstance(statechart, Interpreter):
-            warnings.warn(
-                "Passing an interpreter to bind_property_statechart is deprecated since 1.4.0. "
-                "Use interpreter_klass instead.",
-                DeprecationWarning,
-                stacklevel=2,
-            )
-            interpreter = statechart
-            interpreter.clock = SynchronizedClock(self)
-        else:
-            interpreter_klass = Interpreter if interpreter_klass is None else interpreter_klass
-            interpreter = interpreter_klass(statechart, clock=SynchronizedClock(self))
+
+        interpreter_klass = Interpreter if interpreter_klass is None else interpreter_klass
+        interpreter = interpreter_klass(statechart, clock=SynchronizedClock(self))
 
         listener = PropertyStatechartListener(interpreter)
         self.attach(listener)
@@ -259,7 +238,7 @@ class Interpreter:
         event_or_name: str | Event,
         *event_or_names: str | Event,
         **parameters: str | int | Event | None,
-    ) -> Interpreter:
+    ) -> Self:
         """Create and queue given events to the external event queue.
 
         If an event has a `delay` parameter, it will be processed by the first call to

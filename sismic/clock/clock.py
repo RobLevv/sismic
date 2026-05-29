@@ -5,9 +5,7 @@ from time import time
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from sismic.interpreter.default import Interpreter
-
-__all__ = ["Clock", "SimulatedClock", "SynchronizedClock", "UtcClock"]
+    from sismic.interpreter import Interpreter
 
 
 class Clock(abc.ABC):

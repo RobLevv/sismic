@@ -1,8 +1,6 @@
-from __future__ import annotations
-
 import pickle
 from collections import Counter
-from typing import TYPE_CHECKING
+from pathlib import Path
 
 import pytest
 
@@ -11,9 +9,6 @@ from sismic.exceptions import ConflictingTransitionsError, NonDeterminismError
 from sismic.helpers import coverage_from_trace, log_trace
 from sismic.interpreter import Interpreter
 from sismic.model import Event, InternalEvent, MacroStep, MetaEvent, MicroStep, Transition
-
-if TYPE_CHECKING:
-    from pathlib import Path
 
 
 class TestInterpreterWithSimple:

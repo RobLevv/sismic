@@ -1,15 +1,13 @@
-from __future__ import annotations
-
 from ast import AST, literal_eval
 from typing import TYPE_CHECKING, cast
 
 from behave import given, then, when
+from behave.runner import Context
 
 from sismic import testing
 
 if TYPE_CHECKING:
     from behave.model import Feature
-    from behave.runner import Context
 
 
 @given("I do nothing")

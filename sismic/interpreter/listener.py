@@ -8,9 +8,7 @@ from sismic.model import Event, MetaEvent
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-    from sismic.interpreter import Interpreter
-
-__all__ = ["InternalEventListener", "PropertyStatechartListener"]
+    from .default import Interpreter
 
 
 class InternalEventListener:

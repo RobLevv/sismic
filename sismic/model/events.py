@@ -1,8 +1,4 @@
-from __future__ import annotations
-
 from typing import Generic, TypeVar
-
-__all__ = ["Event", "InternalEvent", "MetaEvent"]
 
 T = TypeVar("T", bound="str|float|Event|None")
 
@@ -24,7 +20,7 @@ class Event(Generic[T]):
 
     __slots__ = ["data", "name"]
 
-    def __init__(self, name: str, **additional_parameters: str | float | Event | None) -> None:
+    def __init__(self, name: str, **additional_parameters: T) -> None:
         self.name = name
         self.data = additional_parameters
 
@@ -33,17 +29,17 @@ class Event(Generic[T]):
             return self.name == other.name and self.data == other.data
         return NotImplemented
 
-    def __getattr__(self, attr: str) -> str | float | Event | None:
+    def __getattr__(self, attr: str) -> T:
         try:
             return self.data[attr]
         except KeyError as err:
             raise AttributeError(name=attr, obj=self) from err
 
-    def __getstate__(self) -> tuple[str, dict[str, str | float | Event | None]]:
+    def __getstate__(self) -> tuple[str, dict[str, T]]:
         # For pickle and implicitly for multiprocessing
         return self.name, self.data
 
-    def __setstate__(self, state: tuple[str, dict[str, str | float | Event | None]]) -> None:
+    def __setstate__(self, state: tuple[str, dict[str, T]]) -> None:
         # For pickle and implicitly for multiprocessing
         self.name, self.data = state
 

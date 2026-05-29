@@ -1,18 +1,12 @@
-from __future__ import annotations
-
+from collections.abc import Generator
 from time import sleep
-from typing import TYPE_CHECKING
 from unittest.mock import MagicMock
 
 import pytest
 
-from sismic.interpreter.default import Interpreter
-from sismic.runner.runner import AsyncRunner
-
-if TYPE_CHECKING:
-    from collections.abc import Generator
-
-    from sismic.model.statechart import Statechart
+from sismic.interpreter import Interpreter
+from sismic.model import Statechart
+from sismic.runner import AsyncRunner
 
 
 class MockedRunner(AsyncRunner):

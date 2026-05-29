@@ -1,17 +1,14 @@
-from __future__ import annotations
-
 from io import StringIO
 from pathlib import Path
-from typing import TYPE_CHECKING, TextIO
+from typing import TextIO
 
 import schema
 from ruamel import yaml
 from schema import Optional, Or, Schema, Use
 
-from .datadict import export_to_dict, import_from_dict
+from sismic.model import Statechart
 
-if TYPE_CHECKING:
-    from sismic.model import Statechart
+from .datadict import export_to_dict, import_from_dict
 
 
 class SCHEMA:

@@ -1,13 +1,7 @@
-from __future__ import annotations
-
 from itertools import chain
-from typing import TYPE_CHECKING
 
-if TYPE_CHECKING:
-    from .elements import Transition
-    from .events import Event
-
-__all__ = ["MacroStep", "MicroStep"]
+from .elements import Transition
+from .events import Event
 
 
 class MicroStep:

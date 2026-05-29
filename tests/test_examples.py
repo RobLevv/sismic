@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from sismic import testing
 from sismic.model import Event
 

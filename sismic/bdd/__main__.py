@@ -1,15 +1,10 @@
-from __future__ import annotations
-
 import argparse
 import sys
-from typing import TYPE_CHECKING
+from collections.abc import Sequence
 
 from sismic.io import import_from_yaml
 
 from .wrappers import execute_bdd
-
-if TYPE_CHECKING:
-    from collections.abc import Sequence
 
 
 def cli(args: Sequence[str] | None = None) -> int:

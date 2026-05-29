@@ -1,10 +1,8 @@
-from __future__ import annotations
-
 import argparse
 import re
 import sys
+from collections.abc import Sequence
 from pathlib import Path
-from typing import TYPE_CHECKING
 
 from sismic.io.yaml import import_from_yaml
 from sismic.model import (
@@ -18,9 +16,6 @@ from sismic.model import (
     Statechart,
     Transition,
 )
-
-if TYPE_CHECKING:
-    from collections.abc import Sequence
 
 
 class PlantUMLExporter:

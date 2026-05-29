@@ -4,7 +4,7 @@ import copy
 from collections.abc import Mapping
 from typing import TYPE_CHECKING, Any, Generic, TypeVar
 
-from sismic.code.evaluator import Evaluator
+from sismic.code import Evaluator
 from sismic.exceptions import CodeEvaluationError
 from sismic.model import Event, InternalEvent, MetaEvent, StateMixin, Transition
 
@@ -12,9 +12,8 @@ if TYPE_CHECKING:
     from collections.abc import Iterator
     from types import CodeType
 
-    from sismic.interpreter.default import Interpreter
+    from sismic.interpreter import Interpreter
 
-__all__ = ["PythonEvaluator"]
 
 T = TypeVar("T")
 

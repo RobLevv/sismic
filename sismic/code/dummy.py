@@ -5,15 +5,10 @@ from typing import TYPE_CHECKING, Any
 from .evaluator import Evaluator
 
 if TYPE_CHECKING:
-    from sismic.interpreter import Interpreter
-
-
-if TYPE_CHECKING:
     from collections.abc import Mapping
 
+    from sismic.interpreter import Interpreter
     from sismic.model import Event
-
-__all__ = ["DummyEvaluator"]
 
 
 class DummyEvaluator(Evaluator):

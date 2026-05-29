@@ -1,10 +1,9 @@
-from __future__ import annotations
-
+from collections.abc import Callable, Iterable
 from copy import deepcopy
-from typing import TYPE_CHECKING, cast
+from typing import Self, cast
 
 from sismic.exceptions import StatechartError
-from sismic.model.elements import (
+from sismic.model import (
     CompositeStateMixin,
     CompoundState,
     HistoryStateMixin,
@@ -12,11 +11,6 @@ from sismic.model.elements import (
     Transition,
     TransitionStateMixin,
 )
-
-if TYPE_CHECKING:
-    from collections.abc import Callable, Iterable
-
-__all__ = ["Statechart"]
 
 
 class Statechart:
@@ -512,7 +506,7 @@ class Statechart:
 
     def copy_from_statechart(
         self,
-        statechart: Statechart,
+        statechart: Self,
         *,
         source: str,
         replace: str,

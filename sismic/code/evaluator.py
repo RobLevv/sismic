@@ -11,8 +11,6 @@ if TYPE_CHECKING:
 
     from sismic.interpreter import Interpreter
 
-__all__ = ["Evaluator"]
-
 
 class Evaluator(abc.ABC):
     """Abstract base class for any evaluator.

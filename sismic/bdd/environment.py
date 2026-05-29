@@ -1,12 +1,7 @@
-from __future__ import annotations
-
-from typing import TYPE_CHECKING
+from behave.model import Scenario, Step
+from behave.runner import Context
 
 from sismic.helpers import log_trace
-
-if TYPE_CHECKING:
-    from behave.model import Scenario, Step
-    from behave.runner import Context
 
 
 def before_scenario(context: Context, scenario: Scenario) -> None:

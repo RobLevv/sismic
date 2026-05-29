@@ -27,7 +27,6 @@ repos:
     rev: v0.15.14
     hooks:
       - id: ruff-check
-        args: [--output-format=concise]
       - id: ruff-format
   - repo: https://github.com/facebook/pyrefly-pre-commit
     rev: 1.0.0

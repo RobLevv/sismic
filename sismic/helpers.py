@@ -7,10 +7,8 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from collections.abc import Mapping
 
-    from .interpreter import Interpreter
-    from .model import MacroStep
-
-__all__ = ["coverage_from_trace", "log_trace"]
+    from sismic.interpreter import Interpreter
+    from sismic.model import MacroStep
 
 
 def log_trace(interpreter: Interpreter) -> list[MacroStep]:
