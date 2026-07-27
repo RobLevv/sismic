@@ -1,11 +1,12 @@
+from time import sleep
+
 import pytest
 
-from time import sleep
-from sismic.clock import SimulatedClock, UtcClock, SynchronizedClock
+from sismic.clock import SimulatedClock, SynchronizedClock, UtcClock
 
 
 class TestSimulatedClock:
-    @pytest.fixture()
+    @pytest.fixture
     def clock(self):
         return SimulatedClock()
 
@@ -16,9 +17,9 @@ class TestSimulatedClock:
         clock.time += 1
         assert clock.time == 1
 
-    def test_monotonicity(self, clock):
+    def test_monotonicity(self, clock: SimulatedClock):
         clock.time = 10
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="Time must be monotonic"):
             clock.time = 0
 
     def test_automatic_increment(self, clock):
@@ -55,11 +56,11 @@ class TestSimulatedClock:
         clock.stop()
         clock.time = 10
         clock.speed = 0.1
-        
+
         clock.start()
         sleep(0.1)
         clock.stop()
-        
+
         assert 10 < clock.time < 10.1
 
     def test_start_stop(self, clock):
@@ -75,7 +76,7 @@ class TestSimulatedClock:
 
 
 class TestUtcClock:
-    @pytest.fixture()
+    @pytest.fixture
     def clock(self):
         return UtcClock()
 
@@ -85,14 +86,14 @@ class TestUtcClock:
         assert clock.time > current_time
 
 
-class TestSynchronizedClock():
-    @pytest.fixture()
+class TestSynchronizedClock:
+    @pytest.fixture
     def interpreter(self, mocker):
         interpreter = mocker.MagicMock()
         interpreter.time = 0
         return interpreter
-    
-    @pytest.fixture()
+
+    @pytest.fixture
     def clock(self, interpreter):
         return SynchronizedClock(interpreter)
 
@@ -106,4 +107,3 @@ class TestSynchronizedClock():
     def test_no_sync_with_clock(self, clock, interpreter):
         interpreter.clock.time = 3
         assert clock.time == 0
-        

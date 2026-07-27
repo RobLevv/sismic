@@ -72,7 +72,7 @@ with full support of the Gherkin language.
 As an illustrative example, let us define the desired behavior of our elevator statechart.
 We first create a feature file that contains several scenarios of interest.
 By convention, this file has the extension *.feature*, but this is not mandatory.
-The example illustrates that Sismic provides a set of predefined steps (e.g., `given`, `when`, `then`) to describe
+The example illustrates that Sismic provides a set of predefined steps (e.g., ``given``, ``when``, ``then``) to describe
 common statechart behavior without having to write a single line of Python code.
 
 .. literalinclude:: examples/elevator/elevator.feature
@@ -343,4 +343,3 @@ Assuming that the features are defined in ``cooking.feature``, these steps in ``
     3 scenarios passed, 0 failed, 0 skipped
     17 steps passed, 0 failed, 0 skipped, 0 undefined
     Took 0m0.040s
-

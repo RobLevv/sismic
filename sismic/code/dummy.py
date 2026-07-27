@@ -1,25 +1,33 @@
-from typing import List, Mapping
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Any
 
 from .evaluator import Evaluator
-from ..model import Event
 
-__all__ = ['DummyEvaluator']
+if TYPE_CHECKING:
+    from collections.abc import Mapping
+
+    from sismic.interpreter import Interpreter
+    from sismic.model import Event
 
 
 class DummyEvaluator(Evaluator):
-    """
-    A dummy evaluator that does nothing and evaluates every condition to True.
-    """
+    """A dummy evaluator that does nothing and evaluates every condition to True."""
 
-    def __init__(self, interpreter=None, *, initial_context=None):
-        super().__init__(interpreter, initial_context=initial_context)
+    def __init__(
+        self,
+        interpreter: Interpreter,
+        *,
+        initial_context: Mapping[str, Any] | None = None,
+    ) -> None:
+        pass
 
     @property
-    def context(self):
-        return dict()
+    def context(self) -> Mapping[str, Any]:
+        return {}
 
-    def _evaluate_code(self, code: str, *, additional_context: Mapping = None) -> bool:
+    def _evaluate_code(self, code: str, *, additional_context: Mapping | None = None) -> bool:  # noqa: ARG002
         return True
 
-    def _execute_code(self, code: str, *, additional_context: Mapping = None) -> List[Event]:
+    def _execute_code(self, code: str, *, additional_context: Mapping | None = None) -> list[Event]:  # noqa: ARG002
         return []

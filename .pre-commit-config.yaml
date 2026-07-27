@@ -1,0 +1,38 @@
+repos:
+  - repo: https://github.com/tox-dev/pyproject-fmt
+    rev: "v2.21.2"
+    hooks:
+      - id: pyproject-fmt
+  - repo: https://github.com/pre-commit/pygrep-hooks
+    rev: v1.10.0
+    hooks:
+    - id: python-use-type-annotations
+    - id: rst-backticks
+    - id: rst-directive-colons
+    - id: rst-inline-touching-normal
+    - id: text-unicode-replacement-char
+    - id: python-check-blanket-noqa
+    - id: python-check-blanket-type-ignore
+    - id: python-check-mock-methods
+    - id: python-no-log-warn
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: trailing-whitespace
+      - id: check-ast
+      - id: check-toml
+      - id: check-yaml
+      - id: end-of-file-fixer
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.15.14
+    hooks:
+      - id: ruff-check
+      - id: ruff-format
+  - repo: https://github.com/facebook/pyrefly-pre-commit
+    rev: 1.0.0
+    hooks:
+      - id: pyrefly-check
+        name: Pyrefly (type checking)
+        args: [--output-format=min-text]
+        language: system
+        pass_filenames: false

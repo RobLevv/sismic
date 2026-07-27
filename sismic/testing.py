@@ -1,53 +1,47 @@
-from typing import Union, Optional, List, Any, Mapping
-from .interpreter import Interpreter
-from .model import MacroStep, Transition
+from __future__ import annotations
 
+from typing import TYPE_CHECKING, Any
 
-__all__ = [
-    'state_is_entered', 'state_is_exited',
-    'event_is_fired', 'event_is_consumed',
-    'transition_is_processed',
-    'expression_holds',
-]
+from sismic.model import MacroStep, Transition
 
-MacroSteps = Union[MacroStep, List[MacroStep]]
+if TYPE_CHECKING:
+    from collections.abc import Mapping
+
+    from sismic.interpreter import Interpreter
+
+MacroSteps = MacroStep | list[MacroStep]
 
 
 def state_is_entered(steps: MacroSteps, name: str) -> bool:
-    """
-    Holds if state was entered during given steps.
+    """Holds if state was entered during given steps.
 
     :param steps: a macrostep or list of macrosteps
     :param name: name of a state
     :return: given state was entered
     """
-    steps = steps if isinstance(steps, list) else [steps]
-    for step in steps:
-        if name in step.entered_states:
-            return True
-    return False
+    if isinstance(steps, MacroStep):
+        return name in steps.entered_states
+    return any(name in step.entered_states for step in steps)
 
 
 def state_is_exited(steps: MacroSteps, name: str) -> bool:
-    """
-    Holds if state was exited during given steps.
+    """Holds if state was exited during given steps.
 
     :param steps: a macrostep or list of macrosteps
     :param name: name of a state
     :return: given state was exited
     """
-    steps = steps if isinstance(steps, list) else [steps]
-    for step in steps:
-        if name in step.exited_states:
-            return True
-    return False
+    if isinstance(steps, MacroStep):
+        return name in steps.exited_states
+    return any(name in step.exited_states for step in steps)
 
 
 def event_is_fired(
-        steps: MacroSteps, name: Optional[str],
-        parameters: Mapping[str, Any] = None) -> bool:
-    """
-    Holds if an event was fired during given steps.
+    steps: MacroSteps,
+    name: str | None,
+    parameters: Mapping[str, Any] | None = None,
+) -> bool:
+    """Holds if an event was fired during given steps.
 
     If name is None, this function looks for any event.
     If parameters are provided, their values are compared with the respective
@@ -60,7 +54,7 @@ def event_is_fired(
     :return: event was fired
     """
     steps = steps if isinstance(steps, list) else [steps]
-    parameters = dict() if parameters is None else parameters
+    parameters = parameters or {}
 
     for step in steps:
         for event in step.sent_events:
@@ -76,10 +70,11 @@ def event_is_fired(
 
 
 def event_is_consumed(
-        steps: MacroSteps, name: Optional[str],
-        parameters: Mapping[str, Any] = None) -> bool:
-    """
-    Holds if an event was consumed during given steps.
+    steps: MacroSteps,
+    name: str | None,
+    parameters: Mapping[str, Any] | None = None,
+) -> bool:
+    """Holds if an event was consumed during given steps.
 
     If name is None, this function looks for any event.
     If parameters are provided, their values are compared with the respective
@@ -92,7 +87,7 @@ def event_is_consumed(
     :return: event was consumed
     """
     steps = steps if isinstance(steps, list) else [steps]
-    parameters = dict() if parameters is None else parameters
+    parameters = parameters or {}
 
     for step in steps:
         if step.event is None:
@@ -109,9 +104,8 @@ def event_is_consumed(
     return False
 
 
-def transition_is_processed(steps: MacroSteps, transition: Optional[Transition] = None) -> bool:
-    """
-    Holds if a transition was processed during given steps.
+def transition_is_processed(steps: MacroSteps, transition: Transition | None = None) -> bool:
+    """Holds if a transition was processed during given steps.
 
     If no transition is provided, this function looks for any transition.
 
@@ -122,20 +116,12 @@ def transition_is_processed(steps: MacroSteps, transition: Optional[Transition] 
     steps = steps if isinstance(steps, list) else [steps]
 
     if transition is None:
-        for step in steps:
-            if len(step.transitions) > 0:
-                return True
-        return False
-    else:
-        for step in steps:
-            if transition in step.transitions:
-                return True
-        return False
+        return any(len(step.transitions) > 0 for step in steps)
+    return any(transition in step.transitions for step in steps)
 
 
 def expression_holds(interpreter: Interpreter, expression: str) -> bool:
-    """
-    Holds if given expression holds.
+    """Holds if given expression holds.
 
     :param interpreter: current interpreter
     :param expression: expression to evaluate

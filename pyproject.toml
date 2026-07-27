@@ -1,0 +1,105 @@
+[project]
+name = "sismic"
+version = "1.6.11"
+description = "Sismic Interactive Statechart Model Interpreter and Checker"
+readme = "README.rst"
+keywords = [
+  "harel",
+  "interpreter",
+  "machine",
+  "model",
+  "scxml",
+  "state",
+  "statechart",
+  "uml",
+]
+maintainers = [ { name = "Robin Lévêque" } ]
+authors = [ { name = "Alexandre Decan" } ]
+requires-python = ">=3.10"
+classifiers = [
+  "Development Status :: 5 - Production/Stable",
+  "Environment :: Console",
+  "Intended Audience :: Developers",
+  "Intended Audience :: Education",
+  "Intended Audience :: Information Technology",
+  "Intended Audience :: Science/Research",
+  "License :: OSI Approved :: GNU Lesser General Public License v3 (LGPLv3)",
+  "Programming Language :: Python :: 3 :: Only",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3.14",
+  "Topic :: Scientific/Engineering",
+  "Topic :: Software Development :: Interpreters",
+  "Topic :: Software Development :: Testing",
+]
+dependencies = [
+  "behave @ git+https://github.com/behave/behave.git@7aeb776387f2c8c39d3b8d763ffe0195e3341791",
+  "pycycle>=0.0.8",
+  "pyyaml>=6.0.3",
+  "schema @ git+https://github.com/keleshev/schema.git@a2d40e1f0d91fd91513b78d51b4ee6d550326afa",
+]
+urls.Homepage = "https://github.com/AlexandreDecan/sismic/"
+scripts.sismic-bdd = "sismic.bdd.__main__:cli"
+scripts.sismic-plantuml = "sismic.io.plantuml:cli"
+
+[dependency-groups]
+dev = [
+  "py-spy>=0.4.2",
+  "pyrefly>=1",
+  "pytest>=5",
+  "pytest-cov>=7.1",
+  "pytest-mock>=3",
+  "pytest-profiling>=1.8.1",
+  "pytest-testmon>=2.2",
+  "snakeviz>=2.2.2",
+  "sphinx<7",
+  "sphinx-autodoc-typehints>=1.2.5,!=1.5",
+  "tox-uv>=1.35.2",
+]
+
+[tool.setuptools]
+zip-safe = true
+include-package-data = true
+packages.find.exclude = [ "docs", "tests" ]
+packages.find.namespaces = false
+
+[tool.ruff]
+target-version = "py310"
+line-length = 100
+fix = true
+lint.select = [ "ALL" ]
+lint.ignore = [ "C901", "COM812", "D", "EM10", "PLR", "SLF001", "TRY003" ]
+lint.per-file-ignores."**/{{tests,docs}/*,testing}.py" = [
+  "ANN",
+  "ARG",
+  "D",
+  "ERA001",
+  "PLR2004",
+  "S101",
+  "S301",
+  "SLF001",
+]
+lint.per-file-ignores."sismic/bdd/*.py" = [
+  "ARG001",
+  "PLC0415",
+  "S101",
+  "T100",
+  "T201",
+]
+lint.pydocstyle.convention = "google"
+lint.pylint.max-args = 6
+
+[tool.pyrefly]
+project-excludes = [ "docs/examples/stopwatch" ]
+
+[tool.pytest]
+norecursedirs = [ "docs" ]
+
+[tool.tox]
+requires = [ "tox-uv>=1.35" ]
+env_list = [ "3.14", "3.13", "3.12", "3.11", "3.10" ]
+env_run_base.deps = [ "pytest-mock>=3" ]
+env_run_base.description = "Run test under {base_python}"
+env_run_base.commands = [ [ "pytest" ] ]

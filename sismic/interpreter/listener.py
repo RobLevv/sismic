@@ -1,33 +1,33 @@
-from typing import Callable, Any
+from __future__ import annotations
 
-from ..model import MetaEvent, Event
+from typing import TYPE_CHECKING, Any
 
-from ..exceptions import PropertyStatechartError
+from sismic.exceptions import PropertyStatechartError
+from sismic.model import Event, MetaEvent
 
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
-__all__ = ['InternalEventListener', 'PropertyStatechartListener']
+    from .default import Interpreter
 
 
 class InternalEventListener:
-    """
-    Listener that filters and propagates internal events as external events.
-    """
+    """Listener that filters and propagates internal events as external events."""
 
-    def __init__(self, callable: Callable[[Event], Any]) -> None:
-        self._callable = callable
+    def __init__(self, func: Callable[[Event], Any]) -> None:
+        self._callable = func
 
     def __call__(self, event: MetaEvent) -> None:
-        if event.name == 'event sent':
+        if event.name == "event sent" and isinstance(event.event, Event):
             self._callable(Event(event.event.name, **event.event.data))
 
 
 class PropertyStatechartListener:
-    """
-    Listener that propagates meta-events to given property statechart, executes
+    """Listener that propagates meta-events to given property statechart, executes
     the property statechart, and checks it.
     """
 
-    def __init__(self, interpreter) -> None:
+    def __init__(self, interpreter: Interpreter) -> None:
         self._interpreter = interpreter
 
     def __call__(self, event: MetaEvent) -> None:
